@@ -1,0 +1,11 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lrxy"
+version = "0.1.0"
+
+[project.scripts]
+lrxy = "lrxy.__main__:main"
+
