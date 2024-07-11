@@ -57,7 +57,7 @@ def fetch_lyric(params: dict) -> str:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description='A lyric fetcher and embedder for music files')
+        description='A synced lyric fetcher and embedder for music files')
     parser.add_argument('file', type=str, help='path of music file')
     parser.add_argument('-s', '--separate',
                         action='store_true', help='write lyric to a lrc file')
