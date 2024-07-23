@@ -4,8 +4,9 @@ This tool is a synced lyric fetcher utility that leverages the [LRCLib](https://
 
 ## Features
 
-- [x] Save lyric to lrc file
-- [x] Embed lyric from lrc file
+- [x] Fetch and embed lyric to metadata
+- [x] Fetch and write lyric to lrc file
+- [x] Embed lyric from lrc file to metadata
 - [ ] batch lyric fetch
 - Supported formats:
   - [x] mp3
@@ -27,7 +28,7 @@ This is the guide for how to use this:
 ```
 usage: lrxy [-h] [-s] [-i LRC] file
 
-A lyric fetcher and embedder for music files
+A synced lyric fetcher and embedder for music files
 
 positional arguments:
   file                 path of music file
