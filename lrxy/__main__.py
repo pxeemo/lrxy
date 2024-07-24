@@ -8,10 +8,10 @@ from lrxy import mp3
 from lrxy import flac
 
 
-def get_filetype(filename: str) -> str:
-    if filename.lower().endswith('.mp3'):
+def get_filetype(audio_file: str) -> str:
+    if audio_file.lower().endswith('.mp3'):
         return "mp3"
-    elif filename.lower().endswith('.flac'):
+    elif audio_file.lower().endswith('.flac'):
         return "flac"
     else:
         print(f"{Fore.RED}Error: {Fore.RESET}Unsupported file format.")
@@ -21,7 +21,12 @@ def get_filetype(filename: str) -> str:
 def fetch_lyric(params: dict) -> str:
     print("Fetching...")
     url: str = "https://lrclib.net/api/get"
-    response = requests.get(url, params=params)
+    try:
+        response = requests.get(url, params=params)
+    except:
+        print(
+            f"{Fore.RED}Error: {Fore.RESET}You might need to check your network connection!")
+        exit(1)
     data = json.loads(response.text)
 
     match response.status_code:
@@ -55,63 +60,78 @@ def fetch_lyric(params: dict) -> str:
         exit(1)
 
 
-def main() -> None:
+def read_lrc() -> None:
     parser = argparse.ArgumentParser(
-        description='A synced lyric fetcher and embedder for music files')
+        prog="lrxy-embed", description='Utility of lrxy to embed lyric from lrc file')
+
+    parser.add_argument('input', type=str, help='path of lrc file')
     parser.add_argument('file', type=str, help='path of music file')
-    parser.add_argument('-s', '--separate',
-                        action='store_true', help='write lyric to a lrc file')
-    parser.add_argument('-i', '--input', dest='lrc', type=str,
-                        help='embed from a lrc file')
 
     args = parser.parse_args()
 
-    filename: str = args.file
-    filetype: str = get_filetype(filename)
+    audio_file: str = args.file
+    lrc_file: str = args.input
+    audio_type: str = get_filetype(audio_file)
 
-    if filetype == "mp3":
-        audio = mp3.load_audio(filename)
+    if audio_type == "mp3":
+        audio = mp3.load_audio(audio_file)
+        embed_lyric = mp3.embed_lyric
+    else:
+        audio = flac.load_audio(audio_file)
+        embed_lyric = flac.embed_lyric
+
+    with open(lrcfile, "r", encoding="utf-8") as f:
+        lyric_text = f.read()
+
+    embed_lyric(audio, lyric_text)
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        prog="lrxy", description='A synced lyric fetcher and embedder for music files')
+    parser.add_argument(
+        '-s', '--separate', action='store_true',
+        help='write lyric to a lrc file')
+    parser.add_argument('file', type=str, help='path of music file')
+
+    args = parser.parse_args()
+
+    audio_file: str = args.file
+    audio_type: str = get_filetype(audio_file)
+
+    if audio_type == "mp3":
+        audio = mp3.load_audio(audio_file)
         metadata_loader = mp3.load_metadata
         embed_lyric = mp3.embed_lyric
     else:
-        audio = flac.load_audio(filename)
+        audio = flac.load_audio(audio_file)
         metadata_loader = flac.load_metadata
         embed_lyric = flac.embed_lyric
 
-    if args.lrc:
-        with open(args.lrc, "r", encoding="utf-8") as f:
-            lyric_text = f.read()
-    else:
-        print("Loading music info...")
-        try:
-            params: dict = metadata_loader(audio)
-        except:
-            print(
-                f"{Fore.RED}Error: {Fore.RESET}There is something wrong with your music's tags!")
-            exit(1)
+    print("Loading music info...")
+    try:
+        params: dict = metadata_loader(audio)
+    except:
+        print(
+            f"{Fore.RED}Error: {Fore.RESET}There is something wrong with your music's tags!")
+        exit(1)
 
-        try:
-            lyric_text: str = fetch_lyric(params)
-        except:
-            print(
-                f"{Fore.RED}Error: {Fore.RESET}You might need to check your network connection!")
-            exit(1)
+    lyric_text: str = fetch_lyric(params)
 
-        # Uncomment to remove space from beginning of the line
-        # lyric_text = "]".join(lyric_text.split("] "))
+    # Uncomment to remove space from beginning of the line
+    # lyric_text = "]".join(lyric_text.split("] "))
 
     if args.separate:
-        lrcfilename: str = filename.removesuffix(filetype) + "lrc"
-        with open(lrcfilename, "w", encoding="utf-8") as f:
+        lrc_file: str = audio_file.removesuffix(audio_type) + "lrc"
+        with open(lrc_file, "w", encoding="utf-8") as f:
             f.write(lyric_text)
         print(
-            f"{Fore.GREEN}Done: {Fore.RESET}Saved to: {Fore.CYAN}{lrcfilename}{Fore.RESET}")
+            f"{Fore.GREEN}Done: {Fore.RESET}Saved to: {Fore.CYAN}{lrc_file}{Fore.RESET}")
     else:
         embed_lyric(audio, lyric_text)
         print(
-            f"{Fore.GREEN}Done: {Fore.RESET}Saved to: {Fore.CYAN}{filename}{Fore.RESET}")
+            f"{Fore.GREEN}Done: {Fore.RESET}Saved to: {Fore.CYAN}{audio_file}{Fore.RESET}")
 
 
 if __name__ == "__main__":
     main()
-
