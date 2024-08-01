@@ -11,17 +11,33 @@ class FetchDataReturnType(TypedDict):
     message: Optional[str]
 
 
-def get_filetype(audio_file: str) -> str:
+class GetFileTypeReturnType(TypedDict):
+    success: bool
+    format: Optional[str]
+    message: Optional[str]
+
+
+def get_filetype(audio_file: str) -> GetFileTypeReturnType:
+    _, file_extension = os.path.splitext(audio_file)
     if os.path.exists(audio_file):
-        _, file_extension = os.path.splitext(audio_file)
         if file_extension in ('.mp3', '.flac'):
-            return file_extension[1:]
+            return {
+                "success": True,
+                "format": file_extension[1:],
+                "message": None
+            }
         else:
-            raise TypeError(
-                "Unsupported file format, only supported '.mp3' and '.flac'"
-            )
+            return {
+                "success": False,
+                "format": file_extension,
+                "message": f"Unsupported format '{file_extension}', only supported '.mp3' and '.flac'"
+            }
     else:
-        raise FileNotFoundError(f"file '{audio_file}' not found")
+        return {
+            "success": False,
+            "format": file_extension,
+            "message": f"File '{audio_file}' not founded"
+        }
 
 
 def fetch_lyric_data(params: dict) -> FetchDataReturnType:
