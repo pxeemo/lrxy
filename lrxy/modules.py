@@ -48,28 +48,17 @@ def fetch_lyric_data(params: dict) -> FetchDataReturnType:
 
 def get_lyric(
         data: dict,
-        default_lyric: Literal["auto", "plain_lyric", "synced_lyric"]
+        default_lyric: Literal["auto", "plain_lyric", "synced_lyric"] = "auto"
     ) -> Optional[str]:
 
     plain_lyric = data.get("plainLyrics")
     synced_lyric = data.get("syncedLyrics")
 
-    match default_lyric:
-        case "auto":
-            if synced_lyric:
-                return synced_lyric
-            elif plain_lyric:
-                return plain_lyric
-            else:
-                return None
-        case "plain_lyric":
-            if plain_lyric:
-                return plain_lyric
-            else:
-                return None
-        case "synced_lyric":
-            if synced_lyric:
-                return synced_lyric
-            else:
-                return None
+    option_lyric = {
+        "auto": synced_lyric or plain_lyric,
+        "synced_lyric": synced_lyric,
+        "plain_lyric": plain_lyric
+    }
+
+    return option_lyric.get(default_lyric, None)
 
