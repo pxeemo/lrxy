@@ -9,7 +9,8 @@ from lrxy.modules import get_filetype, fetch_lyric_data, get_lyric
 
 def read_lrc() -> None:
     parser = argparse.ArgumentParser(
-        prog="lrxy-embed", description="Utility of lrxy to embed lyric from lrc file")
+        prog="lrxy-embed",
+        description="Utility of lrxy to embed lyric from lrc file")
 
     parser.add_argument("input", type=str, help="path of lrc file")
     parser.add_argument("file", type=str, help="path of music file")
@@ -24,7 +25,7 @@ def read_lrc() -> None:
         if audio_extension["format"] == "mp3":
             audio = mp3.load_audio(audio_file)
             embed_lyric = mp3.embed_lyric
-        else: # elif audio_extension == "flac"
+        else:  # elif audio_extension == "flac"
             audio = flac.load_audio((audio_file))
             embed_lyric = flac.embed_lyric
 
@@ -39,7 +40,8 @@ def read_lrc() -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        prog="lrxy", description="A synced lyric fetcher and embedder for music files")
+        prog="lrxy",
+        description="A synced lyric fetcher and embedder for music files")
     parser.add_argument(
         "-s", "--separate", action="store_true",
         help="write lyric to a lrc file")
@@ -57,12 +59,12 @@ def main() -> None:
                 audio = mp3.load_audio(audio_file)
                 metadata_loader = mp3.load_metadata
                 embed_lyric = mp3.embed_lyric
-            else: # elif audio_extension["format"] == ""
+            else:  # elif audio_extension["format"] == ""
                 audio = flac.load_audio(audio_file)
                 metadata_loader = flac.load_metadata
                 embed_lyric = flac.embed_lyric
         else:
-            print(f"{Fore.RED}{audio_extension["message"]}\nMusic: {audio_file}")
+            print(Fore.RED + audio_extension["message"])
             continue
 
         print(f"Loading music info {audio_file}...")
@@ -70,13 +72,12 @@ def main() -> None:
             params: dict = metadata_loader(audio)
         except Exception as exp:
             print(
-                f"{Fore.RED}Error: {Fore.RESET}There is something wrong with your music's tags!" \
-                f"\n{Fore.RED}{str(exp)}"
+                f"{Fore.RED}Error: {Fore.RESET}There is something wrong with your music's tags!"
+                f"{Fore.RED}{exp}{Fore.RESET}\n"
             )
             continue
 
-
-        lyric_data = fetch_lyric_data(params)
+        lyric_data = fetch_lyric_data(params, audio_file)
         if lyric_data["success"]:
             lyric_text = get_lyric(lyric_data["data"])
             if not lyric_text:

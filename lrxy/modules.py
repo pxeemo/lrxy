@@ -1,8 +1,8 @@
 from typing import Literal, Optional, TypedDict
+from colorama import Fore
 import os
 import requests
 import json
-
 
 
 class FetchDataReturnType(TypedDict):
@@ -30,17 +30,17 @@ def get_filetype(audio_file: str) -> GetFileTypeReturnType:
             return {
                 "success": False,
                 "format": file_extension,
-                "message": f"Unsupported format '{file_extension}', only supported '.mp3' and '.flac'"
+                "message": f"{Fore.RED}Error: {Fore.RESET}Unsupported file format '{file_extension}': {Fore.CYAN}{audio_file}{Fore.RESET}\n       Only '.mp3' and '.flac' are supported."
             }
     else:
         return {
             "success": False,
             "format": file_extension,
-            "message": f"File '{audio_file}' not founded"
+            "message": f"{Fore.RED}Error: {Fore.RESET}File not found: {Fore.CYAN}{audio_file}{Fore.RESET}"
         }
 
 
-def fetch_lyric_data(params: dict) -> FetchDataReturnType:
+def fetch_lyric_data(params: dict, audio_file: str) -> FetchDataReturnType:
     URL = "https://lrclib.net/api/get"
     try:
         response = requests.get(URL, params=params)
@@ -56,16 +56,16 @@ def fetch_lyric_data(params: dict) -> FetchDataReturnType:
                 return {
                     "success": False,
                     "data": None,
-                    "message": "Couldn't find this music. Try to change music tags."
+                    "message": f"{Fore.RED}Error: {Fore.RESET}Couldn't find music: {Fore.CYAN}{audio_file}{Fore.RESET}\n       Try to change music's tags."
                 }
             case _:
                 return {"success": False, "data": None, "message": data.message}
 
 
 def get_lyric(
-        data: dict,
-        default_lyric: Literal["auto", "plain_lyric", "synced_lyric"] = "auto"
-    ) -> Optional[str]:
+    data: dict,
+    default_lyric: Literal["auto", "plain_lyric", "synced_lyric"] = "auto"
+) -> Optional[str]:
 
     plain_lyric = data.get("plainLyrics")
     synced_lyric = data.get("syncedLyrics")
@@ -77,4 +77,3 @@ def get_lyric(
     }
 
     return option_lyric.get(default_lyric, None)
-

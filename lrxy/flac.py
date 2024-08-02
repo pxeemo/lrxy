@@ -1,6 +1,5 @@
 #!/usr/bin/python
 
-from mutagen.id3 import USLT
 from mutagen.flac import FLAC
 
 
@@ -20,4 +19,3 @@ def load_metadata(audio: FLAC) -> dict:
 def embed_lyric(audio: FLAC, lyric_text: str) -> None:
     audio["LYRICS"] = lyric_text
     audio.save()
-

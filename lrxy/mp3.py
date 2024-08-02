@@ -26,4 +26,3 @@ def embed_lyric(audio: MP3, lyric_text: str) -> None:
     audio.tags.add(lyric)
 
     audio.save()
-
