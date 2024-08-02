@@ -18,13 +18,13 @@ def read_lrc() -> None:
 
     audio_file: str = args.file
     lrc_file: str = args.input
-    check_audio_type = get_filetype(audio_file)
+    audio_extension = get_filetype(audio_file)
 
-    if check_audio_type["success"]:
-        if check_audio_type["format"] == "mp3":
+    if audio_extension["success"]:
+        if audio_extension["format"] == "mp3":
             audio = mp3.load_audio(audio_file)
             embed_lyric = mp3.embed_lyric
-        else: # elif check_audio_type == "flac"
+        else: # elif audio_extension == "flac"
             audio = flac.load_audio((audio_file))
             embed_lyric = flac.embed_lyric
 
@@ -32,10 +32,10 @@ def read_lrc() -> None:
             lyric_text = f.read()
 
         embed_lyric(audio, lyric_text)
-
     else:
-        print(check_audio_type["message"])
+        print(audio_extension["message"])
         exit()
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(
@@ -50,19 +50,19 @@ def main() -> None:
     audio_files = args.file
 
     for audio_file in audio_files:
-        audio_type = get_filetype(audio_file)
+        audio_extension = get_filetype(audio_file)
 
-        if audio_type["success"]:
-            if audio_type["format"] == "mp3":
+        if audio_extension["success"]:
+            if audio_extension["format"] == "mp3":
                 audio = mp3.load_audio(audio_file)
                 metadata_loader = mp3.load_metadata
                 embed_lyric = mp3.embed_lyric
-            else: # elif audio_type["format"] == ""
+            else: # elif audio_extension["format"] == ""
                 audio = flac.load_audio(audio_file)
                 metadata_loader = flac.load_metadata
                 embed_lyric = flac.embed_lyric
         else:
-            print(f"{Fore.RED}{audio_type["message"]}\nMusic: {audio_file}")
+            print(f"{Fore.RED}{audio_extension["message"]}\nMusic: {audio_file}")
             continue
 
         print(f"Loading music info {audio_file}...")
@@ -89,7 +89,7 @@ def main() -> None:
         # lyric_text = "]".join(lyric_text.split("] "))
 
         if args.separate:
-            lrc_file: str = audio_file.removesuffix(audio_type) + "lrc"
+            lrc_file: str = audio_file.removesuffix(audio_extension) + "lrc"
             with open(lrc_file, "w", encoding="utf-8") as f:
                 f.write(lyric_text)
             print(
