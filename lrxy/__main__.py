@@ -63,7 +63,6 @@ def main() -> None:
                 embed_lyric = flac.embed_lyric
         else:
             print(f"{Fore.RED}{audio_type["message"]}\nMusic: {audio_file}")
-            print(f"{Fore.RESET} ---------------------------------")
             continue
 
         print(f"Loading music info {audio_file}...")
@@ -74,7 +73,6 @@ def main() -> None:
                 f"{Fore.RED}Error: {Fore.RESET}There is something wrong with your music's tags!" \
                 f"\n{Fore.RED}{str(exp)}"
             )
-            print(f"{Fore.RESET} ---------------------------------")
             continue
 
 
@@ -83,10 +81,8 @@ def main() -> None:
             lyric_text = get_lyric(lyric_data["data"])
             if not lyric_text:
                 print(f"This music {audio_file} has no lyrics")
-                print(f"{Fore.RESET} ---------------------------------")
         else:
             print(str(lyric_data["message"]))
-            print(f"{Fore.RESET} ---------------------------------")
             continue
 
         # Uncomment to remove space from beginning of the line
@@ -103,7 +99,6 @@ def main() -> None:
             print(
                 f"{Fore.GREEN}Done: {Fore.RESET}Saved to: {Fore.CYAN}{audio_file}{Fore.RESET}")
 
-        print(f"{Fore.RESET} ---------------------------------")
 
 if __name__ == "__main__":
     main()
