@@ -1,63 +1,10 @@
 #!/usr/bin/python
 
-import requests
-import json
 import argparse
 from colorama import Fore
 from lrxy import mp3
 from lrxy import flac
-
-
-def get_filetype(audio_file: str) -> str:
-    if audio_file.lower().endswith('.mp3'):
-        return "mp3"
-    elif audio_file.lower().endswith('.flac'):
-        return "flac"
-    else:
-        print(f"{Fore.RED}Error: {Fore.RESET}Unsupported file format.")
-        exit(1)
-
-
-def fetch_lyric(params: dict) -> str:
-    print("Fetching...")
-    url: str = "https://lrclib.net/api/get"
-    try:
-        response = requests.get(url, params=params)
-    except:
-        print(
-            f"{Fore.RED}Error: {Fore.RESET}You might need to check your network connection!")
-        exit(1)
-    data = json.loads(response.text)
-
-    match response.status_code:
-        case 200:
-            print(f"Fetched Successfully.")
-        case 404:
-            print(
-                f"{Fore.RED}Error: {Fore.RESET}Couldn't find this music. Try to change music tags.")
-            return
-        case _:
-            print(f"{Fore.RED}Error: {Fore.RESET}{data.message}")
-            exit(1)
-
-    plain_lyric: str = data.get("plainLyrics")
-    synced_lyric: str = data.get("syncedLyrics")
-    if synced_lyric:
-        return synced_lyric
-    elif plain_lyric:
-        choice: str = input(
-            "This music doesn't have synced lyric. Use plain lyric (Y/n)? ")
-        match choice:
-            case "Y" | "y" | "":
-                return plain_lyric
-            case "N" | "n":
-                return
-            case _:
-                print('Please enter "y" or "n"!')
-                exit(1)
-    else:
-        print(f"{Fore.RED}Error: {Fore.RESET}This song has no lyric.")
-        return
+from lrxy.modules import get_filetype, fetch_lyric_data, get_lyric
 
 
 def read_lrc() -> None:
@@ -71,19 +18,23 @@ def read_lrc() -> None:
 
     audio_file: str = args.file
     lrc_file: str = args.input
-    audio_type: str = get_filetype(audio_file)
+    audio_extension = get_filetype(audio_file)
 
-    if audio_type == "mp3":
-        audio = mp3.load_audio(audio_file)
-        embed_lyric = mp3.embed_lyric
+    if audio_extension["success"]:
+        if audio_extension["format"] == "mp3":
+            audio = mp3.load_audio(audio_file)
+            embed_lyric = mp3.embed_lyric
+        else: # elif audio_extension == "flac"
+            audio = flac.load_audio((audio_file))
+            embed_lyric = flac.embed_lyric
+
+        with open(lrc_file, "r", encoding="utf-8") as f:
+            lyric_text = f.read()
+
+        embed_lyric(audio, lyric_text)
     else:
-        audio = flac.load_audio(audio_file)
-        embed_lyric = flac.embed_lyric
-
-    with open(lrcfile, "r", encoding="utf-8") as f:
-        lyric_text = f.read()
-
-    embed_lyric(audio, lyric_text)
+        print(audio_extension["message"])
+        exit()
 
 
 def main() -> None:
@@ -99,34 +50,46 @@ def main() -> None:
     audio_files = args.file
 
     for audio_file in audio_files:
-        audio_type: str = get_filetype(audio_file)
+        audio_extension = get_filetype(audio_file)
 
-        if audio_type == "mp3":
-            audio = mp3.load_audio(audio_file)
-            metadata_loader = mp3.load_metadata
-            embed_lyric = mp3.embed_lyric
+        if audio_extension["success"]:
+            if audio_extension["format"] == "mp3":
+                audio = mp3.load_audio(audio_file)
+                metadata_loader = mp3.load_metadata
+                embed_lyric = mp3.embed_lyric
+            else: # elif audio_extension["format"] == ""
+                audio = flac.load_audio(audio_file)
+                metadata_loader = flac.load_metadata
+                embed_lyric = flac.embed_lyric
         else:
-            audio = flac.load_audio(audio_file)
-            metadata_loader = flac.load_metadata
-            embed_lyric = flac.embed_lyric
-
-        print("Loading music info...")
-        try:
-            params: dict = metadata_loader(audio)
-        except:
-            print(
-                f"{Fore.RED}Error: {Fore.RESET}There is something wrong with your music's tags!")
+            print(f"{Fore.RED}{audio_extension["message"]}\nMusic: {audio_file}")
             continue
 
-        lyric_text: str = fetch_lyric(params)
-        if not lyric_text:
+        print(f"Loading music info {audio_file}...")
+        try:
+            params: dict = metadata_loader(audio)
+        except Exception as exp:
+            print(
+                f"{Fore.RED}Error: {Fore.RESET}There is something wrong with your music's tags!" \
+                f"\n{Fore.RED}{str(exp)}"
+            )
+            continue
+
+
+        lyric_data = fetch_lyric_data(params)
+        if lyric_data["success"]:
+            lyric_text = get_lyric(lyric_data["data"])
+            if not lyric_text:
+                print(f"This music {audio_file} has no lyrics")
+        else:
+            print(str(lyric_data["message"]))
             continue
 
         # Uncomment to remove space from beginning of the line
         # lyric_text = "]".join(lyric_text.split("] "))
 
         if args.separate:
-            lrc_file: str = audio_file.removesuffix(audio_type) + "lrc"
+            lrc_file: str = audio_file.removesuffix(audio_extension) + "lrc"
             with open(lrc_file, "w", encoding="utf-8") as f:
                 f.write(lyric_text)
             print(

@@ -1,2 +1,4 @@
 lrxy/__pycache__/
 lrxy.egg-info/
+project_env/
+test.py
