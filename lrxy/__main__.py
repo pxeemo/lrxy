@@ -2,15 +2,15 @@
 
 import argparse
 from colorama import Fore
-from lrxy import mp3
-from lrxy import flac
+from lrxy import mp3, flac, m4a
 from lrxy.modules import get_filetype, fetch_lyric_data, get_lyric
 
 
 def read_lrc() -> None:
     parser = argparse.ArgumentParser(
         prog="lrxy-embed",
-        description="Utility of lrxy to embed lyric from lrc file")
+        description="Utility of lrxy to embed lyric from lrc file",
+    )
 
     parser.add_argument("input", type=str, help="path of lrc file")
     parser.add_argument("file", type=str, help="path of music file")
@@ -25,9 +25,12 @@ def read_lrc() -> None:
         if audio_extension["format"] == "mp3":
             audio = mp3.load_audio(audio_file)
             embed_lyric = mp3.embed_lyric
-        else:  # elif audio_extension == "flac"
+        elif audio_extension["format"] == "flac":
             audio = flac.load_audio((audio_file))
             embed_lyric = flac.embed_lyric
+        elif audio_extension["format"] == "m4a":
+            audio = m4a.load_audio((audio_file))
+            embed_lyric = m4a.embed_lyric
 
         with open(lrc_file, "r", encoding="utf-8") as f:
             lyric_text = f.read()
@@ -41,10 +44,13 @@ def read_lrc() -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(
         prog="lrxy",
-        description="A synced lyric fetcher and embedder for music files")
+        description="A synced lyric fetcher and embedder for music files",
+    )
     parser.add_argument(
-        "-s", "--separate", action="store_true",
-        help="write lyric to a lrc file")
+        "-s", "--separate",
+        action="store_true",
+        help="write lyric to a lrc file",
+    )
     parser.add_argument("file", nargs="+", help="path of music file")
 
     args = parser.parse_args()
@@ -59,15 +65,19 @@ def main() -> None:
                 audio = mp3.load_audio(audio_file)
                 metadata_loader = mp3.load_metadata
                 embed_lyric = mp3.embed_lyric
-            else:  # elif audio_extension["format"] == ""
+            elif audio_extension["format"] == "flac":
                 audio = flac.load_audio(audio_file)
                 metadata_loader = flac.load_metadata
                 embed_lyric = flac.embed_lyric
+            elif audio_extension["format"] == "m4a":
+                audio = m4a.load_audio(audio_file)
+                metadata_loader = m4a.load_metadata
+                embed_lyric = m4a.embed_lyric
         else:
             print(Fore.RED + audio_extension["message"])
             continue
 
-        print(f"Loading music info {audio_file}...")
+        print(f'Loading music info "{audio_file}"...')
         try:
             params: dict = metadata_loader(audio)
         except Exception as exp:

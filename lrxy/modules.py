@@ -20,7 +20,7 @@ class GetFileTypeReturnType(TypedDict):
 def get_filetype(audio_file: str) -> GetFileTypeReturnType:
     _, file_extension = os.path.splitext(audio_file)
     if os.path.exists(audio_file):
-        if file_extension in ('.mp3', '.flac'):
+        if file_extension in ('.mp3', '.flac', '.m4a'):
             return {
                 "success": True,
                 "format": file_extension[1:],
@@ -30,7 +30,7 @@ def get_filetype(audio_file: str) -> GetFileTypeReturnType:
             return {
                 "success": False,
                 "format": file_extension,
-                "message": f"{Fore.RED}Error: {Fore.RESET}Unsupported file format '{file_extension}': {Fore.CYAN}{audio_file}{Fore.RESET}\n       Only '.mp3' and '.flac' are supported."
+                "message": f"{Fore.RED}Error: {Fore.RESET}Unsupported file format '{file_extension}': {Fore.CYAN}{audio_file}{Fore.RESET}\n       Supported formats: mp3, m4a, flac"
             }
     else:
         return {
