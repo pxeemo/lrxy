@@ -7,11 +7,11 @@ This tool is a synced lyric fetcher utility that leverages the [LRCLib](https://
 - [x] Fetch and embed lyric to metadata
 - [x] Fetch and write lyric to lrc file
 - [x] Embed lyric from lrc file to metadata
-- [ ] batch lyric fetch
+- [x] batch lyric fetch
 - Supported formats:
   - [x] mp3
   - [x] flac
-  - [ ] m4a
+  - [x] m4a
 
 
 ## Installation
