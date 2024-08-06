@@ -1,7 +1,12 @@
 from pathlib import Path
 from typing import Union, Dict, List, Literal
-
-
+from lrxy.exceptions import (
+    PathNotExistsError,
+    FileError,
+    DirectoryError,
+    UnsupportedFileFormatError,
+    FilterFormatError
+)
 SUPPORTED_FORMATS = [".mp3", ".flac", ".m4a"]
 
 
@@ -13,7 +18,8 @@ class MusicFiles:
         elif isinstance(path, Path):
             self.path = path.expanduser()
         else:
-            raise  # TODO
+            raise ValueError(
+                "The path must be a string or a pathlib.Path object")
 
     def _check_path_exists(self) -> bool:
         return self.path.exists()
@@ -21,35 +27,47 @@ class MusicFiles:
     def _check_is_file(self) -> bool:
         return self.path.is_file()
 
-    def _file_extension(self) -> str:
-        return self.path.suffix
+    def _check_is_directory(self) -> bool:
+        return self.path.is_dir()
+
+    def extrac_music_file(self,
+                          ) -> Dict[Path, Literal[*SUPPORTED_FORMATS]]:
+
+        if not self._check_path_exists():
+            raise PathNotExistsError(self.path)
+
+        if not self._check_is_file():
+            raise FileError(self.path)
+
+        file_extension = self.path.suffix
+        if file_extension in SUPPORTED_FORMATS:
+            return {self.path: file_extension}
+        else:
+            raise UnsupportedFileFormatError(
+                file_extension, SUPPORTED_FORMATS)
 
     def extract_music_files(
             self,
             filter_format: List[Literal[*SUPPORTED_FORMATS]
                                 ] = SUPPORTED_FORMATS
     ) -> Dict[Path, Literal[*SUPPORTED_FORMATS]]:
+        pass
+
         if not self._check_path_exists():
-            raise  # TODO
+            raise PathNotExistsError(self.path)
+
+        if not self._check_is_directory():
+            raise DirectoryError(self.path)
 
         if filter_format != SUPPORTED_FORMATS:
-            check_formats = [
-                frt for frt in filter_format if frt in SUPPORTED_FORMATS]
-            if len(check_formats) != len(filter_format):
-                raise  # TODO
+            unsupported_formats = [
+                frt for frt in filter_format if frt not in SUPPORTED_FORMATS]
+            if len(unsupported_formats):
+                raise FilterFormatError(
+                    unsupported_formats, SUPPORTED_FORMATS)
 
-        if self._check_is_file():
-            file_extension = self._file_extension()
-            if file_extension in SUPPORTED_FORMATS:
-                return {self.path: file_extension}
-            else:
-                raise  # TODO
-        else:
-            result_musics = {}
-            for s_format in SUPPORTED_FORMATS:
-                for path in self.path.glob(f"*{s_format}"):
-                    result_musics.update({path: s_format})
-            if result_musics:
-                return result_musics
-            else:
-                raise  # TODO
+        result_musics = {}
+        for frt in filter_format:
+            for music in self.path.glob(f"*{frt}"):
+                result_musics.update({music: frt})
+        return result_musics
