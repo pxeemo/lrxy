@@ -25,6 +25,6 @@ class Audio(BaseFile):
         raise NotImplementedError(
             "This method should be implemented by subclasses.")
 
-    def embed_lyric(self):
+    def embed_lyric(self, lyric: str):
         raise NotImplementedError(
-            "This method should be implemented by subclasses.")
+            "This method should be implemented by suclasses.")
