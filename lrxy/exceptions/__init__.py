@@ -39,3 +39,9 @@ class FilterFormatError(LrxyException):
             f", Only supported formats {supported_formats}"
         )
         super().__init__(message)
+
+
+class TagError(LrxyException):
+    def __init__(self, path: str, tag_name: str) -> None:
+        message = f"This music '{path}' has no tag {tag_name}"
+        super().__init__(message)
