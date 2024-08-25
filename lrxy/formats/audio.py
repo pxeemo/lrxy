@@ -30,7 +30,7 @@ class Audio(BaseFile):
         self.artist_name = self.audio.get(tags_name[0])
         self.track_name = self.audio.get(tags_name[1])
         self.album = self.audio.get(tags_name[2])
-        self.duration = self.audio.length
+        self.duration = int(self.audio.info.length)
 
         if self.artist_name:
             self.artist_name = self.artist_name[0]
