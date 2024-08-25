@@ -1,15 +1,22 @@
-from typing import Union
+from typing import Literal, Union, List, Dict
 from pathlib import Path
+
+from mutagen.flac import FLAC
+from mutagen.mp3 import MP3
+from mutagen.mp4 import MP4
 
 from lrxy.base_files import BaseFile
 from lrxy.exceptions import (
     FileError,
-    PathNotExistsError
+    PathNotExistsError,
+    TagError
 )
 
 
 class Audio(BaseFile):
-    def __init__(self, path: Union[Path, str]) -> None:
+    def __init__(self, path: Union[Path, str],
+                 audio_type: Literal[FLAC, MP4, MP3],
+                 tags_name: List[str]) -> None:
         super().__init__(path)
 
         if not self._check_path_exists():
@@ -18,12 +25,35 @@ class Audio(BaseFile):
         if not self._check_is_file():
             raise FileError(str(self.path))
 
-        self.audio = None
-        self.extenstion = self.path.suffix
+        self.audio = audio_type(self.path)
 
-    def get_tags(self):
-        raise NotImplementedError(
-            "This method should be implemented by subclasses.")
+        self.artist_name = self.audio.get(tags_name[0])
+        self.track_name = self.audio.get(tags_name[1])
+        self.album = self.audio.get(tags_name[2])
+        self.duration = self.audio.length
+
+        if self.artist_name:
+            self.artist_name = self.artist_name[0]
+        else:
+            raise TagError(str(self.path), "artist")
+
+        if self.track_name:
+            self.track_name = self.track_name[0]
+        else:
+            raise TagError(str(self.path), "track")
+
+        if self.album:
+            self.album = self.album[0]
+        else:
+            raise TagError(str(self.path), "album")
+
+    def get_tags(self) -> Dict[str, str]:
+        return {
+            "artist_name": self.artist_name,
+            "track_name": self.track_name,
+            "album": self.album,
+            "duration": self.duration
+        }
 
     def embed_lyric(self, lyric: str):
         raise NotImplementedError(
