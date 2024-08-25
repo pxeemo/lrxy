@@ -52,7 +52,7 @@ class Audio(BaseFile):
             "artist_name": self.artist_name,
             "track_name": self.track_name,
             "album": self.album,
-            "duration": self.duration
+            "duration": str(self.duration)
         }
 
     def embed_lyric(self, lyric: str):
