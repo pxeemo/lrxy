@@ -13,7 +13,7 @@ from lrxy.exceptions import (
     TagError
 )
 
-SUPPORTRD_FORMATS = [".mp3", ".mp4", ".flac"]
+SUPPORTED_FORMATS = [".mp3", ".mp4", ".flac"]
 
 
 class Audio(BaseFile):
@@ -28,11 +28,9 @@ class Audio(BaseFile):
         if not self._check_is_file():
             raise FileError(str(self.path))
 
-        self.extension = self.path.suffix
-
-        if self.extension not in SUPPORTRD_FORMATS:
+        if self.extension not in SUPPORTED_FORMATS:
             raise UnsupportedFileFormatError(
-                self.extension, SUPPORTRD_FORMATS
+                self.extension, SUPPORTED_FORMATS
             )
 
         self.audio = audio_type(self.path)
