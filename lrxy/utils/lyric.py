@@ -6,19 +6,12 @@ import requests
 API: str = "https://lrclib.net/api/get"
 
 
-class Params(TypedDict):
-    artist_name: str
-    track_name: str
-    album_name: str
-    duration: int
-
-
 class ReturnData(TypedDict):
     success: bool
     data: Union[dict, str]
 
 
-def LRCLibAPI(params: Params) -> ReturnData:
+def LRCLibAPI(params: dict) -> ReturnData:
     res = requests.get(API, params=params)
 
     match res.status_code:
