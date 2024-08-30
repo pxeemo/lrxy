@@ -12,6 +12,8 @@ class BaseFile:
             raise ValueError(
                 "The path must be a string or a pathlib.Path object")
 
+        self.extension = self.path.suffix
+
     def _check_path_exists(self) -> bool:
         return self.path.exists()
 
