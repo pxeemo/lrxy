@@ -1,58 +1,51 @@
+from typing import Union, Generator
 from pathlib import Path
-from typing import Union, Dict, List, Literal
+
+from lrxy.formats import Flac, Mp3, Mp4
+from lrxy.utils import LRCLibAPI
 from lrxy.base_files import BaseFile
+from lrxy.formats import SUPPORTED_FORMATS
 from lrxy.exceptions import (
-    PathNotExistsError,
-    FileError,
-    DirectoryError,
-    UnsupportedFileFormatError,
-    FilterFormatError
-)
-SUPPORTED_FORMATS = [".mp3", ".flac", ".m4a"]
+    LrxyException, PathNotExistsError, FileError, UnsupportedFileFormatError)
 
 
-class MusicFiles(BaseFile):
-    def __init__(self, path: Union[str, Path]) -> None:
-        super().__init__(path)
+def iter_files(*file_paths: Union[Path, str]) -> Generator[dict, None, None]:
+    for file_path in file_paths:
+        file = BaseFile(file_path)
 
-    def extrac_music_file(self,
-                          ) -> Dict[Path, Literal[*SUPPORTED_FORMATS]]:
+        try:
+            if not file._check_path_exists():
+                raise PathNotExistsError(str(file.path))
 
-        if not self._check_path_exists():
-            raise PathNotExistsError(str(self.path))
+            if not file._check_is_file():
+                raise FileError(str(file.path))
 
-        if not self._check_is_file():
-            raise FileError(str(self.path))
+            match file.extension:
+                case ".mp3":
+                    file = Mp3(file.path)
+                case ".flac":
+                    file = Flac(file.path)
+                case ".mp4":
+                    file = Mp4(file.path)
+                case _:
+                    raise UnsupportedFileFormatError(
+                        file.extension, SUPPORTED_FORMATS
+                    )
 
-        file_extension = self.path.suffix
-        if file_extension in SUPPORTED_FORMATS:
-            return {self.path: file_extension}
+        except LrxyException as e:
+            yield {file.path: f"Error: {e}"}
+
         else:
-            raise UnsupportedFileFormatError(
-                file_extension, SUPPORTED_FORMATS)
+            lrc = LRCLibAPI(file.get_tags())
 
-    def extract_music_files(
-            self,
-            filter_format: List[Literal[*SUPPORTED_FORMATS]
-                                ] = SUPPORTED_FORMATS
-    ) -> Dict[Path, Literal[*SUPPORTED_FORMATS]]:
-
-        if not self._check_path_exists():
-            raise PathNotExistsError(str(self.path))
-
-        if not self._check_is_directory():
-            raise DirectoryError([self.path])
-
-        if filter_format != SUPPORTED_FORMATS:
-            unsupported_formats = [
-                frt for frt in filter_format if frt not in SUPPORTED_FORMATS]
-            if len(unsupported_formats):
-                raise FilterFormatError(
-                    unsupported_formats, SUPPORTED_FORMATS)
-
-        result_musics = {}
-        for frt in filter_format:
-            for music in self.path.glob(f"*{frt}"):
-                result_musics.update({music: frt})
-
-        return result_musics
+            if lrc["success"]:
+                plain_lyric = lrc["data"].get("plainLyrics")
+                synced_lyric = lrc["data"].get("syncedLyrics")
+                lyric = synced_lyric or plain_lyric
+                if lyric:
+                    file.embed_lyric(lyric)
+                    yield {file.path: "success"}
+                else:
+                    yield {file.path: "unsuccessful"}
+            else:
+                yield {file.path: "unsuccessful"}
