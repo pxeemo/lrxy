@@ -51,7 +51,7 @@ class Audio(BaseFile):
         return {
             "artist_name": self.artist_name,
             "track_name": self.track_name,
-            "album": self.album,
+            "album_name": self.album,
             "duration": self.duration
         }
 
