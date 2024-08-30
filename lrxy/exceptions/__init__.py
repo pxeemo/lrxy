@@ -15,28 +15,12 @@ class FileError(LrxyException):
         super().__init__(message)
 
 
-class DirectoryError(LrxyException):
-    def __init__(self, path: list) -> None:
-        message = f"This path '{path}' is not a directory"
-        super().__init__(message)
-
-
 class UnsupportedFileFormatError(LrxyException):
     def __init__(self, unsupported_format: str,
                  supported_formats: list) -> None:
         message = (
             f"Unsupported format '{unsupported_format}'. "
             f"Only supported formats {supported_formats} "
-        )
-        super().__init__(message)
-
-
-class FilterFormatError(LrxyException):
-    def __init__(self, unsupported_formats: list,
-                 supported_formats: list) -> None:
-        message = (
-            f"You filter formats '{unsupported_formats} but does not supported"
-            f", Only supported formats {supported_formats}"
         )
         super().__init__(message)
 
