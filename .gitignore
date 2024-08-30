@@ -1,4 +1,5 @@
-lrxy/__pycache__/
-lrxy.egg-info/
+__pycache__/
+*.egg-info/
 project_env/
 test.py
+TODO.list
