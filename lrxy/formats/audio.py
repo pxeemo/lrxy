@@ -9,8 +9,11 @@ from lrxy.base_files import BaseFile
 from lrxy.exceptions import (
     FileError,
     PathNotExistsError,
+    UnsupportedFileFormatError,
     TagError
 )
+
+SUPPORTRD_FORMATS = [".mp3", ".mp4", ".flac"]
 
 
 class Audio(BaseFile):
@@ -25,8 +28,14 @@ class Audio(BaseFile):
         if not self._check_is_file():
             raise FileError(str(self.path))
 
-        self.audio = audio_type(self.path)
+        self.extension = self.path.suffix
 
+        if self.extension not in SUPPORTRD_FORMATS:
+            raise UnsupportedFileFormatError(
+                self.extension, SUPPORTRD_FORMATS
+            )
+
+        self.audio = audio_type(self.path)
         self.artist_name = self.audio.get(tags_name[0])
         self.track_name = self.audio.get(tags_name[1])
         self.album = self.audio.get(tags_name[2])
