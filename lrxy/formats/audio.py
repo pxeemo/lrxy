@@ -1,6 +1,7 @@
 from typing import Literal, Union, List, Dict
 from pathlib import Path
 
+import mutagen
 from mutagen.flac import FLAC
 from mutagen.mp3 import MP3
 from mutagen.mp4 import MP4
@@ -18,7 +19,7 @@ SUPPORTED_FORMATS = [".mp3", ".mp4", ".flac"]
 
 class Audio(BaseFile):
     def __init__(self, path: Union[Path, str],
-                 audio_type: Literal[FLAC, MP4, MP3],
+                 audio_type: Literal[mutagen.flac.FLAC, mutagen.mp4.MP4, mutagen.mp3.MP3],
                  tags_name: List[str]) -> None:
         super().__init__(path)
 
