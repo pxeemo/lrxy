@@ -33,8 +33,8 @@ def iter_files(*file_paths: Union[Path, str]) -> Generator[dict, None, None]:
                     )
 
         except LrxyException as e:
-            yield {file.path: {'success': False, 'data': str(e)}}
+            yield {"path": file.path, 'success': False, 'data': str(e)}
 
         else:
             lrc = LRCLibAPI(file.get_tags())
-            yield {file: lrc}  # file -> Mp3 | Flac | Mp4
+            yield {"path": file} | lrc  # file -> Mp3 | Flac | Mp4
