@@ -18,7 +18,6 @@ keywords = ["synced-lyrics", "lyrics-fetcher"]
 
 [project.scripts]
 lrxy = "lrxy.__main__:main"
-lrxy-embed = "lrxy.__main__:read_lrc"
 
 [project.urls]
 Repository = "https://github.com/pxeemo/lrxy.git"
