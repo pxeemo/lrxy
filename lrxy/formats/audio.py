@@ -55,6 +55,12 @@ class Audio(BaseFile):
         else:
             raise TagError(str(self.path), "album")
 
+    def __repr__(self):
+        return f"{self.__class__.__name__}({str(self.path)!r})"
+
+    def __str__(self):
+        return str(self.path)
+
     def get_tags(self) -> Dict[str, str]:
         return {
             "artist_name": self.artist_name,
