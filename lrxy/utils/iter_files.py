@@ -33,19 +33,8 @@ def iter_files(*file_paths: Union[Path, str]) -> Generator[dict, None, None]:
                     )
 
         except LrxyException as e:
-            yield {file.path: f"Error: {e}"}
+            yield {"path": file.path, 'success': False, 'data': str(e)}
 
         else:
             lrc = LRCLibAPI(file.get_tags())
-
-            if lrc["success"]:
-                plain_lyric = lrc["data"].get("plainLyrics")
-                synced_lyric = lrc["data"].get("syncedLyrics")
-                lyric = synced_lyric or plain_lyric
-                if lyric:
-                    file.embed_lyric(lyric)
-                    yield {file.path: "success"}
-                else:
-                    yield {file.path: "unsuccessful"}
-            else:
-                yield {file.path: "unsuccessful"}
+            yield {"path": file} | lrc  # file -> Mp3 | Flac | Mp4
