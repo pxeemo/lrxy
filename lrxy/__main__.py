@@ -100,7 +100,7 @@ def main() -> None:
         # lyric_text = "]".join(lyric_text.split("] "))
 
         if args.separate:
-            lrc_file: str = audio_file.removesuffix(audio_extension) + "lrc"
+            lrc_file: str = audio_file.removesuffix(audio_extension["format"]) + "lrc"
             with open(lrc_file, "w", encoding="utf-8") as f:
                 f.write(lyric_text)
             print(
