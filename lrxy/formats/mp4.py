@@ -7,6 +7,22 @@ from .audio import Audio
 
 
 class Mp4(Audio):
+    """
+        Example:
+        >>> mp4_music = Mp3("System Of A Down - Chop Suey.mp4")
+        >>> mp4_music.track_name
+        Chop Suey
+        >>> mp4_music.get_tags()
+        {
+            'artist_name': 'System Of A Down',
+            'track_name': 'Chop Suey',
+            'album_name': 'Toxicity',
+            'duration': '208'
+        }
+        >>> with open("lyric.txt") as f:
+        ...     mp4_music.embed_lyric(f.read())
+
+    """
     def __init__(self, path: Union[Path, str]) -> None:
         super().__init__(path, MP4, ["©ART", "©nam", "©alb"])
 
