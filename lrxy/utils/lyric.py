@@ -12,6 +12,26 @@ class ReturnData(TypedDict):
 
 
 def LRCLibAPI(params: dict) -> ReturnData:
+    """
+        Example:
+        >>> lrc = LRCLibAPI(
+        ...     {'artist_name': 'System Of A Down',
+        ...     'track_name': 'Chop Suey',
+        ...     'album_name': 'Toxicity',
+        ...     'duration': '208'}
+        ... )
+        >>> lrc
+        {
+            "success": true,
+            "data": {
+                "id": 464567,
+                "instrumental": false,
+                "plainLyrics": "...",
+                "syncedLyrics": "..."
+            }
+        }
+)
+    """
     res = requests.get(API, params=params)
 
     match res.status_code:

@@ -6,13 +6,14 @@ from mutagen.flac import FLAC
 from mutagen.mp3 import MP3
 from mutagen.mp4 import MP4
 
-from lrxy.base_files import BaseFile
 from lrxy.exceptions import (
     FileError,
     PathNotExistsError,
     UnsupportedFileFormatError,
     TagError
 )
+from .base_files import BaseFile
+
 
 SUPPORTED_FORMATS = [".mp3", ".mp4", ".flac"]
 
