@@ -14,7 +14,7 @@ from lrxy.exceptions import (
 )
 
 
-SUPPORTED_FORMATS = [".mp3", ".mp4", ".flac"]
+SUPPORTED_FORMATS = [".mp3", ".m4a", ".flac"]
 
 
 class BaseFile:

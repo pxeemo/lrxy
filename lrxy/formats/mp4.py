@@ -9,7 +9,7 @@ from .audio import Audio
 class Mp4(Audio):
     """
         Example:
-        >>> mp4_music = Mp4("System Of A Down - Chop Suey.mp4")
+        >>> mp4_music = Mp4("System Of A Down - Chop Suey.m4a")
         >>> mp4_music.track_name
         Chop Suey
         >>> mp4_music.get_tags()

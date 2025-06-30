@@ -32,7 +32,7 @@ def iter_files(*file_paths: Union[Path, str]) -> Generator[dict, None, None]:
                     file = Mp3(file.path)
                 case ".flac":
                     file = Flac(file.path)
-                case ".mp4":
+                case ".m4a":
                     file = Mp4(file.path)
 
         except LrxyException as e:
