@@ -12,28 +12,39 @@ from lrxy.exceptions import (
     UnsupportedFileFormatError,
     TagError
 )
-from .base_files import BaseFile
 
 
 SUPPORTED_FORMATS = [".mp3", ".mp4", ".flac"]
 
+
+class BaseFile:
+    def __init__(self, path: Union[str, Path]) -> None:
+        if isinstance(path, str):
+            self.path = Path(path).expanduser()
+        elif isinstance(path, Path):
+            self.path = path.expanduser()
+        else:
+            raise ValueError(
+                "The path must be a string or a pathlib.Path object")
+
+        if not self.path.exists():
+            raise PathNotExistsError(str(self.path))
+
+        if not self.path.is_file():
+            raise FileError(str(self.path))
+
+        self.extension = self.path.suffix
+
+        if self.extension not in SUPPORTED_FORMATS:
+            raise UnsupportedFileFormatError(
+                self.extension, SUPPORTED_FORMATS
+            )
 
 class Audio(BaseFile):
     def __init__(self, path: Union[Path, str],
                  audio_type: Literal[mutagen.flac.FLAC, mutagen.mp4.MP4, mutagen.mp3.MP3],
                  tags_name: List[str]) -> None:
         super().__init__(path)
-
-        if not self._check_path_exists():
-            raise PathNotExistsError(str(self.path))
-
-        if not self._check_is_file():
-            raise FileError(str(self.path))
-
-        if self.extension not in SUPPORTED_FORMATS:
-            raise UnsupportedFileFormatError(
-                self.extension, SUPPORTED_FORMATS
-            )
 
         self.audio = audio_type(self.path)
         self.artist_name = self.audio.get(tags_name[0])

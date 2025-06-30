@@ -3,10 +3,10 @@ from pathlib import Path
 
 from lrxy.formats import Flac, Mp3, Mp4
 from lrxy.utils import LRCLibAPI
-from lrxy.formats.base_files import BaseFile
+from lrxy.formats.audio import BaseFile
 from lrxy.formats import SUPPORTED_FORMATS
 from lrxy.exceptions import (
-    LrxyException, PathNotExistsError, FileError, UnsupportedFileFormatError)
+    LrxyException, UnsupportedFileFormatError)
 
 
 def iter_files(*file_paths: Union[Path, str]) -> Generator[dict, None, None]:
@@ -24,14 +24,8 @@ def iter_files(*file_paths: Union[Path, str]) -> Generator[dict, None, None]:
         ...             sep="\\n")
     """
     for file_path in file_paths:
-        file = BaseFile(file_path)
-
         try:
-            if not file._check_path_exists():
-                raise PathNotExistsError(str(file.path))
-
-            if not file._check_is_file():
-                raise FileError(str(file.path))
+            file = BaseFile(file_path)
 
             match file.extension:
                 case ".mp3":
@@ -40,13 +34,9 @@ def iter_files(*file_paths: Union[Path, str]) -> Generator[dict, None, None]:
                     file = Flac(file.path)
                 case ".mp4":
                     file = Mp4(file.path)
-                case _:
-                    raise UnsupportedFileFormatError(
-                        file.extension, SUPPORTED_FORMATS
-                    )
 
         except LrxyException as e:
-            yield {"path": file.path, 'success': False, 'data': str(e)}
+            yield {"path": file_path, 'success': False, 'data': str(e)}
 
         else:
             lrc = LRCLibAPI(file.get_tags())
