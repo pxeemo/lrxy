@@ -9,7 +9,7 @@ from .audio import Audio
 class Flac(Audio):
     """
         Example:
-        >>> flac_music = Mp3("System Of A Down - Chop Suey.flac")
+        >>> flac_music = Flac("System Of A Down - Chop Suey.flac")
         >>> flac_music.track_name
         Chop Suey
         >>> flac_music.get_tags()
