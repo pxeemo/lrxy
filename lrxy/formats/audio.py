@@ -18,7 +18,13 @@ SUPPORTED_FORMATS = [".mp3", ".m4a", ".flac"]
 
 
 class BaseFile:
-    def __init__(self, path: Union[str, Path]) -> None:
+    def __init__(
+            self,
+            path: Union[str, Path],
+            *,
+            match_lrc: bool = False
+            ) -> None:
+
         if isinstance(path, str):
             self.path = Path(path).expanduser()
         elif isinstance(path, Path):
@@ -35,10 +41,16 @@ class BaseFile:
 
         self.extension = self.path.suffix
 
-        if self.extension not in SUPPORTED_FORMATS:
-            raise UnsupportedFileFormatError(
-                self.extension, SUPPORTED_FORMATS
-            )
+        if match_lrc:
+            if self.extension not in (lrc_formats:=(".lrc", ".txt")):
+                raise UnsupportedFileFormatError(
+                    self.extension, lrc_formats
+                )
+        else:
+            if self.extension not in SUPPORTED_FORMATS:
+                raise UnsupportedFileFormatError(
+                    self.extension, SUPPORTED_FORMATS
+                )
 
 class Audio(BaseFile):
     def __init__(self, path: Union[Path, str],
@@ -84,3 +96,9 @@ class Audio(BaseFile):
     def embed_lyric(self, lyric: str):
         raise NotImplementedError(
             "This method should be implemented by suclasses.")
+
+    def embed_from_lrc(self, path: Union[str, Path]):
+        lrc_file = BaseFile(path, match_lrc=True)
+
+        with open(lrc_file.path) as lrc:
+            self.embed_lyric(lrc.read())
