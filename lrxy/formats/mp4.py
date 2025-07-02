@@ -9,10 +9,10 @@ from .audio import Audio
 class Mp4(Audio):
     """
         Example:
-        >>> mp4_music = Mp3("System Of A Down - Chop Suey.mp4")
-        >>> mp4_music.track_name
+        >>> m4a_music = Mp4("System Of A Down - Chop Suey.m4a")
+        >>> m4a_music.track_name
         Chop Suey
-        >>> mp4_music.get_tags()
+        >>> m4a_music.get_tags()
         {
             'artist_name': 'System Of A Down',
             'track_name': 'Chop Suey',
@@ -20,7 +20,7 @@ class Mp4(Audio):
             'duration': '208'
         }
         >>> with open("lyric.txt") as f:
-        ...     mp4_music.embed_lyric(f.read())
+        ...     m4a_music.embed_lyric(f.read())
 
     """
     def __init__(self, path: Union[Path, str]) -> None:
