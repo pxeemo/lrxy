@@ -1,6 +1,7 @@
 __pycache__/
 *.egg-info/
 project_env/
+venv/
 .mypy_cache/
 test.py
 TODO.list

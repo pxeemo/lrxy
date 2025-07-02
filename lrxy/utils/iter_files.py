@@ -1,7 +1,7 @@
 from typing import Union, Generator
 from pathlib import Path
 
-from lrxy.formats import Flac, Mp3, Mp4
+from lrxy.formats import Flac, Mp3, M4a
 from lrxy.utils import LRCLibAPI
 from lrxy.formats.audio import BaseFile
 from lrxy.formats import SUPPORTED_FORMATS
@@ -33,11 +33,11 @@ def iter_files(*file_paths: Union[Path, str]) -> Generator[dict, None, None]:
                 case ".flac":
                     file = Flac(file.path)
                 case ".m4a":
-                    file = Mp4(file.path)
+                    file = M4a(file.path)
 
         except LrxyException as e:
             yield {"path": file_path, 'success': False, 'data': str(e)}
 
         else:
             lrc = LRCLibAPI(file.get_tags())
-            yield {"music_obj": file} | lrc  # file -> Mp3 | Flac | Mp4
+            yield {"music_obj": file} | lrc  # file -> Mp3 | Flac | M4a

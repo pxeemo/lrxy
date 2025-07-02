@@ -6,10 +6,10 @@ from mutagen.mp4 import MP4
 from .audio import Audio
 
 
-class Mp4(Audio):
+class M4a(Audio):
     """
         Example:
-        >>> m4a_music = Mp4("System Of A Down - Chop Suey.m4a")
+        >>> m4a_music = M4a("System Of A Down - Chop Suey.m4a")
         >>> m4a_music.track_name
         Chop Suey
         >>> m4a_music.get_tags()
