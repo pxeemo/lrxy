@@ -1,7 +1,6 @@
 from typing import Literal, Union, List, Dict
 from pathlib import Path
 
-import mutagen
 from mutagen.flac import FLAC
 from mutagen.mp3 import MP3
 from mutagen.mp4 import MP4
@@ -18,13 +17,7 @@ SUPPORTED_FORMATS = [".mp3", ".m4a", ".flac"]
 
 
 class BaseFile:
-    def __init__(
-            self,
-            path: Union[str, Path],
-            *,
-            match_lrc: bool = False
-            ) -> None:
-
+    def __init__(self, path: Union[str, Path], *, match_lrc: bool = False) -> None:
         if isinstance(path, str):
             self.path = Path(path).expanduser()
         elif isinstance(path, Path):
@@ -42,7 +35,7 @@ class BaseFile:
         self.extension = self.path.suffix
 
         if match_lrc:
-            if self.extension not in (lrc_formats:=(".lrc", ".txt")):
+            if self.extension not in (lrc_formats := (".lrc", ".txt")):
                 raise UnsupportedFileFormatError(
                     self.extension, lrc_formats
                 )
@@ -52,9 +45,10 @@ class BaseFile:
                     self.extension, SUPPORTED_FORMATS
                 )
 
+
 class Audio(BaseFile):
     def __init__(self, path: Union[Path, str],
-                 audio_type: Literal[mutagen.flac.FLAC, mutagen.mp4.MP4, mutagen.mp3.MP3],
+                 audio_type: Literal[FLAC, MP4, MP3],
                  tags_name: List[str]) -> None:
         super().__init__(path)
 
