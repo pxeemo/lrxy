@@ -1,4 +1,5 @@
 import argparse
+from sys import exit
 from lrxy.utils import iter_files
 
 
@@ -35,11 +36,10 @@ def main():
     if args.embed:
         if len(args.files[0]) > 1:
             parser.error("can't use '--embed' with multiple music files")
-            return
+            exit(2)
 
         # TODO: read and embed from an lrc file
-        print("--embed is not implemented yet!")
-        return
+        raise NotImplementedError("--embed is not implemented yet!")
 
     for result in iter_files(*args.files[0]):
         if result['success']:
@@ -55,18 +55,21 @@ def main():
                 print(f"Song has no lyric: {audio.path}")
                 continue
 
-            if args.write_lrc:
-                lrc_file = audio.path.with_suffix(".lrc")
-                if lrc_file.exists():
-                    raise FileExistsError
+            try:
+                if args.write_lrc:
+                    lrc_file = audio.path.with_suffix(".lrc")
+                    if lrc_file.exists():
+                        raise FileExistsError
 
-                with open(lrc_file, "w", encoding="utf-8") as f:
-                    f.write(lyric)
+                    with open(lrc_file, "w", encoding="utf-8") as f:
+                        f.write(lyric)
 
-                print(f"Successfully written to: {lrc_file}")
-            else:
-                audio.embed_lyric(lyric)
-                print("Successfully embedded the lyric")
+                    print(f"Successfully written to: {lrc_file}")
+                else:
+                    audio.embed_lyric(lyric)
+                    print("Successfully embedded the lyric")
+            except FileExistsError as e:
+                print(e)
 
 
 if __name__ == "__main__":
