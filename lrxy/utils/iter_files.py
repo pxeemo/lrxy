@@ -7,7 +7,10 @@ from lrxy.formats.audio import BaseFile
 from lrxy.exceptions import LrxyException
 
 
-def iter_files(*file_paths: Union[Path, str]) -> Generator[dict, None, None]:
+def iter_files(
+    *file_paths: Union[Path, str],
+    fetch: bool = True
+) -> Generator[dict, None, None]:
     """
         Example:
         >>> for music in iter_files("song1.mp3", "song2.flac"):
@@ -36,5 +39,8 @@ def iter_files(*file_paths: Union[Path, str]) -> Generator[dict, None, None]:
             yield {"path": file_path, 'success': False, 'data': str(e)}
 
         else:
-            lrc = LRCLibAPI(file.get_tags())
-            yield {"music_obj": file} | lrc  # file -> Mp3 | Flac | M4a
+            if fetch:
+                lrc = LRCLibAPI(file.get_tags())
+                yield {"music_obj": file} | lrc  # file -> Mp3 | Flac | M4a
+            else:
+                yield {"music_obj": file}
