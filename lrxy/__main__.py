@@ -31,19 +31,18 @@ def main():
     )
 
     args = parser.parse_args()
-    print(args)
+    fetch = not args.embed
 
-    if args.embed:
-        if len(args.files[0]) > 1:
-            parser.error("can't use '--embed' with multiple music files")
-            exit(2)
+    if args.embed and len(args.files[0]) > 1:
+        parser.error("Can't use '--embed' with multiple music files")
+        exit(2)
 
-        # TODO: read and embed from an lrc file
-        raise NotImplementedError("--embed is not implemented yet!")
-
-    for result in iter_files(*args.files[0]):
-        if result['success']:
-            audio = result["music_obj"]
+    for result in iter_files(*args.files[0], fetch=fetch):
+        audio = result["music_obj"]
+        if args.embed:
+            audio.embed_from_lrc(args.embed[0])
+            print("Successfully embedded lyric from file")
+        elif result['success']:
             plain_lyric = result["data"]["plainLyrics"]
             synced_lyric = result["data"]["syncedLyrics"]
             lyric = synced_lyric
