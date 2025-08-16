@@ -1,6 +1,7 @@
 import sys
 import argparse
 import logging
+
 from lrxy.utils import iter_files
 
 
@@ -22,14 +23,13 @@ def main():
         "--embed",
         metavar="LRC_FILE",
         nargs=1,
-        help="embed existing lyrics file into music"
+        help="embed existing lyric file into music"
     )
 
     parser.add_argument(
         "--log-level",
         choices=["error", "warning", "info", "debug"],
         default="info",
-        help="set log level"
     )
 
     parser.add_argument(
@@ -62,10 +62,11 @@ def main():
             lyric = synced_lyric
 
             if plain_lyric and not synced_lyric:
-                logger.warning("Synced lyric not available. Falling back to plain lyric.")
+                logger.warning(
+                    "Synced lyric not available. Falling back to plain lyric.")
                 lyric = plain_lyric
             elif not plain_lyric:
-                logger.error(f"Song has no lyric: {audio.path}")
+                logger.error("Song has no lyric: %s", audio.path)
                 continue
 
             try:
@@ -78,15 +79,15 @@ def main():
                     with open(lrc_file, "w", encoding="utf-8") as f:
                         f.write(lyric)
 
-                    logger.info(f"Successfully written to: {lrc_file}")
+                    logger.info("Successfully written to: %s", lrc_file)
                 else:
                     audio.embed_lyric(lyric)
-                    logger.info(f"Successfully embedded the lyric: {audio}")
+                    logger.info("Successfully embedded the lyric: %s", audio)
             except FileExistsError as e:
                 logger.error(e)
 
         elif result['data'] == 'notfound':
-            logger.error(f"Music not found: {audio}")
+            logger.error("Music not found: %s", audio)
 
 
 if __name__ == "__main__":
