@@ -1,10 +1,9 @@
 from typing import Union, Generator
 from pathlib import Path
 
-from lrxy.formats import Flac, Mp3, M4a
-from lrxy.utils import LRCLibAPI
-from lrxy.formats.audio import BaseFile
 from lrxy.exceptions import LrxyException
+from lrxy.providers import LRCLibAPI
+from .audio import load_audio
 
 
 def iter_files(
@@ -25,15 +24,7 @@ def iter_files(
     """
     for file_path in file_paths:
         try:
-            file = BaseFile(file_path)
-
-            match file.extension:
-                case ".mp3":
-                    file = Mp3(file.path)
-                case ".flac":
-                    file = Flac(file.path)
-                case ".m4a":
-                    file = M4a(file.path)
+            file = load_audio(file_path)
 
         except LrxyException as e:
             yield {"path": file_path, 'success': False, 'data': str(e)}

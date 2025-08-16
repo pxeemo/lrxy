@@ -1,23 +1,17 @@
-from typing import Literal, Union, List, Dict
+from typing import Union, List, Dict
 from pathlib import Path
 
-from mutagen.flac import FLAC
-from mutagen.mp3 import MP3
-from mutagen.mp4 import MP4
-
 from lrxy.exceptions import (
-    FileError,
-    PathNotExistsError,
     UnsupportedFileFormatError,
-    TagError
+    FileError,
+    TagError,
+    PathNotExistsError,
 )
 
 
-SUPPORTED_FORMATS = [".mp3", ".m4a", ".flac"]
-
-
 class BaseFile:
-    def __init__(self, path: Union[str, Path], *, match_lrc: bool = False) -> None:
+    def __init__(self, path: Union[str, Path],
+                 *, match_lrc: bool = False) -> None:
         if isinstance(path, str):
             self.path = Path(path).expanduser()
         elif isinstance(path, Path):
@@ -35,28 +29,20 @@ class BaseFile:
         self.extension = self.path.suffix
 
         if match_lrc:
-            if self.extension not in (lrc_formats := (".lrc", ".txt")):
-                raise UnsupportedFileFormatError(
-                    self.extension, lrc_formats
-                )
-        else:
-            if self.extension not in SUPPORTED_FORMATS:
-                raise UnsupportedFileFormatError(
-                    self.extension, SUPPORTED_FORMATS
-                )
+            if self.extension not in (".lrc", ".txt"):
+                raise UnsupportedFileFormatError(self.extension)
 
 
-class Audio(BaseFile):
-    def __init__(self, path: Union[Path, str],
-                 audio_type: Literal[FLAC, MP4, MP3],
+class AudioType(BaseFile):
+    def __init__(self, audio,
                  tags_name: List[str]) -> None:
-        super().__init__(path)
+        super().__init__(audio.filename)
 
-        self.audio = audio_type(self.path)
-        self.artist_name = self.audio.get(tags_name[0])
-        self.track_name = self.audio.get(tags_name[1])
-        self.album = self.audio.get(tags_name[2])
-        self.duration = str(int(self.audio.info.length))
+        self.audio = audio
+        self.artist_name = audio.get(tags_name[0])
+        self.track_name = audio.get(tags_name[1])
+        self.album = audio.get(tags_name[2])
+        self.duration = str(int(audio.info.length))
 
         if self.artist_name:
             self.artist_name = self.artist_name[0]
@@ -89,7 +75,7 @@ class Audio(BaseFile):
 
     def embed_lyric(self, lyric: str):
         raise NotImplementedError(
-            "This method should be implemented by suclasses.")
+            "This method should be implemented by subclasses.")
 
     def embed_from_lrc(self, path: Union[str, Path]):
         lrc_file = BaseFile(path, match_lrc=True)

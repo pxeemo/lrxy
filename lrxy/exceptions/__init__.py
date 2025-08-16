@@ -16,12 +16,8 @@ class FileError(LrxyException):
 
 
 class UnsupportedFileFormatError(LrxyException):
-    def __init__(self, unsupported_format: str,
-                 supported_formats: list) -> None:
-        self.message = (
-            f"Unsupported format '{unsupported_format}'. "
-            f"Only supported formats {supported_formats} "
-        )
+    def __init__(self, unsupported_format: str) -> None:
+        self.message = f"Unsupported format: '{unsupported_format}'"
         super().__init__(self.message)
 
 

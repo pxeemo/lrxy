@@ -1,7 +1,6 @@
-from .flac import Flac
-from .mp3 import Mp3
-from .m4a import M4a
-from .audio import SUPPORTED_FORMATS
+from .id3 import LrxyID3
+from .vorbis import LrxyVorbis
+from .mp4 import LrxyMP4
 
 
-__all__ = ["Flac", "Mp3", "M4a", "SUPPORTED_FORMATS"]
+__all__ = ["LrxyID3", "LrxyVorbis", "LrxyMP4"]

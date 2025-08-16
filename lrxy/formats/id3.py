@@ -1,13 +1,9 @@
-from typing import Union
-from pathlib import Path
-
-from mutagen.mp3 import MP3
 from mutagen.id3 import USLT
 
-from .audio import Audio
+from .filetype import AudioType
 
 
-class Mp3(Audio):
+class LrxyID3(AudioType):
     """
         Example:
         >>> mp3_music = Mp3("System Of A Down - Chop Suey.mp3")
@@ -24,8 +20,9 @@ class Mp3(Audio):
         ...     mp3_music.embed_lyric(f.read())
 
     """
-    def __init__(self, path: Union[Path, str]):
-        super().__init__(path, MP3, ["TPE1", "TIT2", "TALB"])
+
+    def __init__(self, audio):
+        super().__init__(audio, ["TPE1", "TIT2", "TALB"])
 
     def embed_lyric(self, lyric: str) -> None:
         lyric = USLT(encoding=3, desc='', text=lyric)

@@ -1,12 +1,7 @@
-from typing import Union
-from pathlib import Path
-
-from mutagen.flac import FLAC
-
-from .audio import Audio
+from .filetype import AudioType
 
 
-class Flac(Audio):
+class LrxyVorbis(AudioType):
     """
         Example:
         >>> flac_music = Flac("System Of A Down - Chop Suey.flac")
@@ -21,12 +16,11 @@ class Flac(Audio):
         }
         >>> with open("lyric.txt") as f:
         ...     flac_music.embed_lyric(f.read())
-
     """
-    def __init__(self, path: Union[Path, str]):
-        super().__init__(path,
-                         FLAC, ["artist", "title", "album"])
+
+    def __init__(self, audio):
+        super().__init__(audio, ["artist", "title", "album"])
 
     def embed_lyric(self, lyric: str) -> None:
-        self.audio["LYRICS"] = lyric
+        self.audio["lyrics"] = lyric
         self.audio.save()
