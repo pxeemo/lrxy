@@ -1,4 +1,21 @@
-from typing import TypedDict, Union
+"""LRCLib API client for fetching song lyrics with consistent response structure.
+
+Provides a clean interface to the LRCLib.net API with standardized response
+formatting for all possible outcomes. Handles API response parsing and error
+conditions with clear categorization of failure types.
+
+The API requires these metadata fields for successful lookup:
+- artist_name
+- track_name
+- album_name
+- duration (in seconds)
+
+Note:
+    LRCLib uses duration matching as part of its search algorithm,
+    so accurate duration is critical for finding the correct lyrics.
+"""
+
+from typing import TypedDict, Literal, Optional
 
 import requests
 
@@ -6,44 +23,128 @@ import requests
 API: str = "https://lrclib.net/api/get"
 
 
-class ReturnData(TypedDict):
-    success: bool
-    data: Union[dict, str]
+class LyricData(TypedDict):
+    """Structure for successful lyric data from LRCLib."""
+    id: int
+    instrumental: bool
+    plainLyrics: Optional[str]
+    syncedLyrics: Optional[str]
 
 
-def LRCLibAPI(params: dict) -> ReturnData:
-    """
-        Example:
-        >>> lrc = LRCLibAPI(
-        ...     {'artist_name': 'System Of A Down',
-        ...     'track_name': 'Chop Suey',
-        ...     'album_name': 'Toxicity',
-        ...     'duration': '208'}
-        ... )
-        >>> lrc
-        {
-            "success": true,
-            "data": {
-                "id": 464567,
-                "instrumental": false,
-                "plainLyrics": "...",
-                "syncedLyrics": "..."
-            }
+class APIResponse(TypedDict):
+    """Standardized response structure for all LRCLib API interactions.
+
+    Provides consistent shape regardless of outcome, with clear separation
+    of success and error states through designated fields.
+
+    Example:
+        Success: {
+            'success': True,
+            'data': {'id': 123, 'instrumental': False, ...},
+            'error': None,
+            'message': None
         }
-)
+        Error: {
+            'success': False,
+            'data': None,
+            'error': 'notfound',
+            'message': 'No lyrics found for the given track metadata'
+        }
     """
-    res = requests.get(API, params=params)
+    success: bool
+    data: Optional[LyricData]  # Present only on success
+    error: Optional[Literal["notfound", "network", "api"]]  # Error category
+    message: Optional[str]  # Human-readable error description
 
-    match res.status_code:
-        case 200:
-            j_data = res.json()
-            j_data = dict(
-                filter(lambda d: (d[0], d[1]) if d[0] in [
-                    "id", "instrumental", "plainLyrics", "syncedLyrics"
-                ] else False, res.json().items())
-            )
-            return {"success": True, "data": j_data}
-        case 404:
-            return {"success": False, "data": "notfound"}
-        case _:
-            return {"success": False, "data": res.text}
+
+def lrclib_api(params: dict) -> APIResponse:
+    """Fetch lyrics from LRCLib API using track metadata.
+
+    Makes a GET request to LRCLib.net with provided track information
+    and processes the response into a standardized format with clear
+    error categorization.
+
+    Args:
+        params: Dictionary containing track metadata with keys:
+            - artist_name: Primary artist name
+            - track_name: Track title
+            - album_name: Album title
+            - duration: Track duration in seconds (as string)
+
+    Returns:
+        Standardized APIResponse structure with consistent fields:
+        - success: Boolean indicating overall operation success
+        - data: Lyric data dictionary (only when success=True)
+        - error: Error category (only when success=False)
+        - message: Detailed error description (only when success=False)
+
+    Example:
+        >>> from lrxy.providers.lrclib import lrclib_api
+        >>>
+        >>> result = lrclib_api({
+        ...     "artist_name": "Radiohead",
+        ...     "track_name": "No Surprises",
+        ...     "album_name": "OK Computer",
+        ...     "duration": "216"
+        ... })
+        >>>
+        >>> if result['success']:
+        ...     print(f"Lyrics found: {len(result['data']['plainLyrics'])} chars")
+        ...     audio.embed_lyric(result['data']['plainLyrics'])
+        ... else:
+        ...     if result['error'] == 'notfound':
+        ...         print("No matching lyrics found")
+        ...     else:
+        ...         print(f"Error ({result['error']}): {result['message']}")
+    """
+    try:
+        # Add timeout to prevent hanging requests
+        res = requests.get(API, params=params, timeout=10.0)
+
+        if res.status_code == 200:
+            try:
+                api_data = res.json()
+                # Extract only the fields we care about
+                lyric_data = {
+                    "id": api_data["id"],
+                    "instrumental": api_data["instrumental"],
+                    "plainLyrics": api_data.get("plainLyrics"),
+                    "syncedLyrics": api_data.get("syncedLyrics")
+                }
+                return {
+                    "success": True,
+                    "data": lyric_data,
+                    "error": None,
+                    "message": None
+                }
+            except (KeyError, TypeError) as e:
+                return {
+                    "success": False,
+                    "data": None,
+                    "error": "api",
+                    "message": f"Invalid API response structure: {str(e)}"
+                }
+
+        elif res.status_code == 404:
+            return {
+                "success": False,
+                "data": None,
+                "error": "notfound",
+                "message": "No music found for the given track metadata"
+            }
+
+        else:
+            return {
+                "success": False,
+                "data": None,
+                "error": "api",
+                "message": f"API error {res.status_code}: {res.text}"
+            }
+
+    except requests.exceptions.RequestException as e:
+        return {
+            "success": False,
+            "data": None,
+            "error": "network",
+            "message": f"Network error: {str(e)}"
+        }
