@@ -17,7 +17,7 @@ The following format-specific handlers are available for advanced use:
 
 All handlers inherit from AudioType and provide identical methods:
 - embed_lyric(lyric: str): Embed plain-text lyrics
-- embed_from_lrc(path): Embed lyrics from .lrc file
+- embed_from_file(path): Embed lyrics from separate text file
 - get_tags(): Retrieve metadata dictionary
 """
 

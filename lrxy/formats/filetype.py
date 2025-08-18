@@ -30,34 +30,34 @@ class BaseFile:
 
     Args:
         path: File path (string or Path object)
-        match_lrc: If True, validates path has .lrc extension
+        match_file: If True, validates path has desired format extension (.lrc)
 
     Raises:
         ValueError: If path is not string or Path object
         PathNotExistsError: If file doesn't exist
         FileError: If path points to a directory
-        UnsupportedFileFormatError: If match_lrc=True and extension invalid
+        UnsupportedFileFormatError: If match_file=True and extension invalid
 
     Example:
         >>> from lrxy.formats import BaseFile
         >>> audio_file = BaseFile("song.mp3")
-        >>> lrc_file = BaseFile("song.lrc", match_lrc=True)
+        >>> lrc_file = BaseFile("song.lrc", match_file=True)
     """
 
-    def __init__(self, path: Union[str, Path], *, match_lrc: bool = False) -> None:
+    def __init__(self, path: Union[str, Path], *, match_file: bool = False) -> None:
         """Initialize with validated file path.
 
         Normalizes path, checks existence, and validates file type/format.
 
         Args:
             path: File path to process
-            match_lrc: Require .lrc extension when True
+            match_file: Require .lrc extension when True
 
         Raises:
             ValueError: Invalid path type
             PathNotExistsError: Path doesn't exist
             FileError: Path is a directory
-            UnsupportedFileFormatError: Invalid extension for LRC
+            UnsupportedFileFormatError: Invalid music file format
 
         Example:
             >>> from pathlib import Path
@@ -78,10 +78,6 @@ class BaseFile:
             raise FileError(str(self.path))
 
         self.extension = self.path.suffix
-
-        if match_lrc:
-            if self.extension != ".lrc":
-                raise UnsupportedFileFormatError(self.extension)
 
 
 class AudioType(BaseFile):
@@ -214,14 +210,14 @@ class AudioType(BaseFile):
         raise NotImplementedError(
             "This method should be implemented by subclasses.")
 
-    def embed_from_lrc(self, path: Union[str, Path]):
-        """Embed lyrics from .lrc file.
+    def embed_from_file(self, path: Union[str, Path]):
+        """Embed lyrics from an external file.
 
         Loads lyrics from external file and embeds using format-specific
         handler. Validates input file format before processing.
 
         Args:
-            path: Path to .lrc lyric file
+            path: Path to external lyric file
 
         Raises:
             UnsupportedFileFormatError: If file extension invalid
@@ -230,9 +226,9 @@ class AudioType(BaseFile):
         Example:
             >>> from lrxy.utils import load_audio
             >>> audio = load_audio("song.mp3")
-            >>> audio.embed_from_lrc("song.lrc")
+            >>> audio.embed_from_file("song.lrc")
         """
-        lrc_file = BaseFile(path, match_lrc=True)
+        file = BaseFile(path, match_lrc=True)
 
-        with open(lrc_file.path) as lrc:
+        with open(file.path) as lrc:
             self.embed_lyric(lrc.read())
