@@ -10,28 +10,26 @@ def iter_files(
     *file_paths: Union[Path, str],
     fetch: bool = True
 ) -> Generator[dict, None, None]:
-    """
-        Example:
-        >>> for music in iter_files("song1.mp3", "song2.flac"):
-        ...     if music["success"]:
-        ...         music_obj = music["music_obj"]
-        ...         synced_lyrics = music["data"]["syncedLyrics"]
-        ...         music_obj.embed_lyric(synced_lyrics)
-        ...     else:
-        ...         print(music["data"],  # Error details
-        ...               music["path"],  # File path
-        ...               sep="\\n")
-    """
     for file_path in file_paths:
+        result = {
+            'path': Path(file_path),
+            'success': True,
+            'error': None,
+            'music_obj': None,
+            'lyrics': None,
+            'provider_data': None,
+        }
+
         try:
-            file = load_audio(file_path)
+            audio = load_audio(file_path)
+            result['music_obj'] = audio
+
+            if fetch:
+                lrc = LRCLibAPI(audio.get_tags())
+                result['provider_data'] = lrc
 
         except LrxyException as e:
-            yield {"path": file_path, 'success': False, 'data': str(e)}
+            result['success'] = False
+            result['error'] = str(e)
 
-        else:
-            if fetch:
-                lrc = LRCLibAPI(file.get_tags())
-                yield {"music_obj": file} | lrc  # file -> Mp3 | Flac | M4a
-            else:
-                yield {"music_obj": file}
+        yield result
