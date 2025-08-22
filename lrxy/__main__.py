@@ -15,7 +15,7 @@ def main():
 
     group = parser.add_mutually_exclusive_group()
     group.add_argument(
-        "--write-file",
+        "-n", "--no-embed",
         action="store_true",
         help="write lyrics to separate text files"
     )
@@ -37,7 +37,7 @@ def main():
         metavar="MUSIC_FILE",
         action="append",
         nargs="+",
-        help="path of music files to process"
+        help="path of music file to process"
     )
 
     args = parser.parse_args()
@@ -70,7 +70,7 @@ def main():
                 continue
 
             try:
-                if args.write_file:
+                if args.no_embed:
                     file = audio.path.with_suffix(".lrc")
                     if file.exists():
                         raise FileExistsError(
