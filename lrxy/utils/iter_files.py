@@ -80,7 +80,8 @@ from .audio import load_audio
 
 def iter_files(
     *file_paths: Union[Path, str],
-    fetch: bool = True
+    fetch: bool = True,
+    provider=lrclib_api,
 ) -> Generator[dict, None, None]:
     for file_path in file_paths:
         result = {
@@ -96,7 +97,7 @@ def iter_files(
             result['music_obj'] = audio
 
             if fetch:
-                lrc = lrclib_api(audio.get_tags())
+                lrc = provider(audio.get_tags())
                 if lrc['success']:
                     result['data'] = lrc['data']
                 else:
