@@ -38,12 +38,14 @@ class LrxyID3(AudioType):
         """
         super().__init__(audio, ["TPE1", "TIT2", "TALB"])
 
+        self.has_lyric = any([audio.tags.getall(tag) for tag in ['USLT', 'SYLT']])
+
     def embed_lyric(self, lyric: str) -> None:
-        """Embed unsynchronized lyrics into the audio file's ID3 tags.
+        """Embed lyrics into the audio file's ID3 tags.
 
         Performs a complete lyric embedding workflow:
         1. Converts tags to ID3v2.3 (broadest player compatibility)
-        2. Removes all existing unsynchronized (USLT) and synchronized (SYLT) lyrics
+        2. Removes all existing USLT and SYLT lyrics
         3. Creates new USLT tag with UTF-8 encoding (encoding=3)
         4. Saves changes to the audio file
 
@@ -60,11 +62,11 @@ class LrxyID3(AudioType):
             >>> audio = load_audio("song.mp3")
             >>> audio.embed_lyric("Verse 1\\nThis is a line\\n\\nChorus\\n...")
         """
-        lyric = USLT(encoding=3, desc='', text=lyric)
 
-        self.audio.tags.update_to_v23()
-        self.audio.tags.delall('USLT')
-        self.audio.tags.delall('SYLT')
-        self.audio.tags.add(lyric)
-
-        self.audio.save()
+        lyric_tag = USLT(encoding=3, desc='', text=lyric)
+        audio = self.audio
+        audio.tags.update_to_v23()
+        audio.tags.delall('USLT')
+        audio.tags.delall('SYLT')
+        audio.tags.add(lyric_tag)
+        audio.save()

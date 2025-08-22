@@ -36,6 +36,8 @@ class LrxyVorbis(AudioType):
         """
         super().__init__(audio, ["artist", "title", "album"])
 
+        self.has_lyric = bool(audio.tags.get("lyrics"))
+
     def embed_lyric(self, lyric: str) -> None:
         """Embed lyrics into the audio file's Vorbis comments.
 
@@ -55,5 +57,6 @@ class LrxyVorbis(AudioType):
             >>> audio = load_audio("song.flac")
             >>> audio.embed_lyric("Verse 1\\nThis is a line\\n\\nChorus\\n...")
         """
-        self.audio["lyrics"] = lyric
+
+        self.audio.tags["lyrics"] = lyric
         self.audio.save()
