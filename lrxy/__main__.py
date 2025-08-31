@@ -1,114 +1,93 @@
-#!/usr/bin/python
-
+import sys
 import argparse
-from colorama import Fore
-from lrxy import mp3, flac, m4a
-from lrxy.modules import get_filetype, fetch_lyric_data, get_lyric
+import logging
+
+from lrxy.utils import iter_files
 
 
-def read_lrc() -> None:
-    parser = argparse.ArgumentParser(
-        prog="lrxy-embed",
-        description="Utility of lrxy to embed lyric from lrc file",
-    )
+def main():
+    logger = logging.getLogger(__name__)
 
-    parser.add_argument("input", type=str, help="path of lrc file")
-    parser.add_argument("file", type=str, help="path of music file")
-
-    args = parser.parse_args()
-
-    audio_file: str = args.file
-    lrc_file: str = args.input
-    audio_extension = get_filetype(audio_file)
-
-    if audio_extension["success"]:
-        if audio_extension["format"] == "mp3":
-            audio = mp3.load_audio(audio_file)
-            embed_lyric = mp3.embed_lyric
-        elif audio_extension["format"] == "flac":
-            audio = flac.load_audio((audio_file))
-            embed_lyric = flac.embed_lyric
-        elif audio_extension["format"] == "m4a":
-            audio = m4a.load_audio((audio_file))
-            embed_lyric = m4a.embed_lyric
-
-        with open(lrc_file, "r", encoding="utf-8") as f:
-            lyric_text = f.read()
-
-        embed_lyric(audio, lyric_text)
-    else:
-        print(audio_extension["message"])
-        exit()
-
-
-def main() -> None:
     parser = argparse.ArgumentParser(
         prog="lrxy",
-        description="A synced lyric fetcher and embedder for music files",
+        description="A synced lyric fetcher and embedder for music files"
     )
-    parser.add_argument(
-        "-s", "--separate",
+
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument(
+        "-n", "--no-embed",
         action="store_true",
-        help="write lyric to a lrc file",
+        help="write lyrics to separate text files"
     )
-    parser.add_argument("file", nargs="+", help="path of music file")
+    group.add_argument(
+        "--embed",
+        metavar="FILE",
+        nargs=1,
+        help="embed existing lyric file into music"
+    )
+
+    parser.add_argument(
+        "--log-level",
+        choices=["error", "warning", "info", "debug"],
+        default="info",
+    )
+
+    parser.add_argument(
+        "files",
+        metavar="MUSIC_FILE",
+        action="append",
+        nargs="+",
+        help="path of music file to process"
+    )
 
     args = parser.parse_args()
+    fetch = not args.embed
 
-    audio_files = args.file
+    logger.setLevel(getattr(logging, args.log_level.upper()))
+    logger.debug(args)
 
-    for audio_file in audio_files:
-        audio_extension = get_filetype(audio_file)
+    if args.embed and len(args.files[0]) > 1:
+        parser.error("Can't use '--embed' with multiple music files")
+        sys.exit(2)
 
-        if audio_extension["success"]:
-            if audio_extension["format"] == "mp3":
-                audio = mp3.load_audio(audio_file)
-                metadata_loader = mp3.load_metadata
-                embed_lyric = mp3.embed_lyric
-            elif audio_extension["format"] == "flac":
-                audio = flac.load_audio(audio_file)
-                metadata_loader = flac.load_metadata
-                embed_lyric = flac.embed_lyric
-            elif audio_extension["format"] == "m4a":
-                audio = m4a.load_audio(audio_file)
-                metadata_loader = m4a.load_metadata
-                embed_lyric = m4a.embed_lyric
-        else:
-            print(Fore.RED + audio_extension["message"])
-            continue
+    for result in iter_files(*args.files[0], fetch=fetch):
+        audio = result["music_obj"]
+        logger.debug(result)
+        if args.embed:
+            audio.embed_from_file(args.embed[0])
+            logger.info("Successfully embedded lyric from file")
+        elif result['success']:
+            plain_lyric = result["data"]["plainLyrics"]
+            synced_lyric = result["data"]["syncedLyrics"]
+            lyric = synced_lyric
 
-        print(f'Loading music info "{audio_file}"...')
-        try:
-            params: dict = metadata_loader(audio)
-        except Exception as exp:
-            print(
-                f"{Fore.RED}Error: {Fore.RESET}There is something wrong with your music's tags!"
-                f"{Fore.RED}{exp}{Fore.RESET}\n"
-            )
-            continue
+            if plain_lyric and not synced_lyric:
+                logger.warning(
+                    "Synced lyric not available. Falling back to plain lyric.")
+                lyric = plain_lyric
+            elif not plain_lyric:
+                logger.error("Song has no lyric: %s", audio.path)
+                continue
 
-        lyric_data = fetch_lyric_data(params, audio_file)
-        if lyric_data["success"]:
-            lyric_text = get_lyric(lyric_data["data"])
-            if not lyric_text:
-                print(f"This music {audio_file} has no lyrics")
-        else:
-            print(str(lyric_data["message"]))
-            continue
+            try:
+                if args.no_embed:
+                    file = audio.path.with_suffix(".lrc")
+                    if file.exists():
+                        raise FileExistsError(
+                            f"File already exists: {file}")
 
-        # Uncomment to remove space from beginning of the line
-        # lyric_text = "]".join(lyric_text.split("] "))
+                    with open(file, "w", encoding="utf-8") as f:
+                        f.write(lyric)
 
-        if args.separate:
-            lrc_file: str = audio_file.removesuffix(audio_extension["format"]) + "lrc"
-            with open(lrc_file, "w", encoding="utf-8") as f:
-                f.write(lyric_text)
-            print(
-                f"{Fore.GREEN}Done: {Fore.RESET}Saved to: {Fore.CYAN}{lrc_file}{Fore.RESET}")
-        else:
-            embed_lyric(audio, lyric_text)
-            print(
-                f"{Fore.GREEN}Done: {Fore.RESET}Saved to: {Fore.CYAN}{audio_file}{Fore.RESET}")
+                    logger.info("Successfully written to: %s", file)
+                else:
+                    audio.embed_lyric(lyric)
+                    logger.info("Successfully embedded the lyric: %s", audio)
+            except FileExistsError as e:
+                logger.error(e)
+
+        elif result['data'] == 'notfound':
+            logger.error("Music not found: %s", audio)
 
 
 if __name__ == "__main__":
