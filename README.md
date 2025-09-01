@@ -1,7 +1,7 @@
 # lrxy - Lyric Embedding Library
 
-[![PyPI version](https://img.shields.io/pypi/v/lrxy.svg)](https://pypi.org/project/lrxy/)
-[![Python versions](https://img.shields.io/pypi/pyversions/lrxy.svg)](https://pypi.org/project/lrxy/)
+[![PyPI - Version](https://img.shields.io/pypi/v/lrxy)](https://pypi.org/project/lrxy/)
+[![Python Version from PEP 621 TOML](https://img.shields.io/python/required-version-toml?tomlFilePath=https%3A%2F%2Fraw.githubusercontent.com%2Fpxeemo%2Flrxy%2Fmain%2Fpyproject.toml)](https://pypi.org/project/lrxy/)
 
 Embed lyrics directly into your audio files with a simple, consistent interface across multiple audio formats.
 
@@ -15,8 +15,15 @@ Embed lyrics directly into your audio files with a simple, consistent interface 
 
 ## Installation
 
-```bash
+#### Using pip:
+```sh
 pip install lrxy
+```
+
+#### Using uv:
+```sh
+uv tool install lrxy # as a cli tool
+uv pip install lrxy # as a python module
 ```
 
 ## Command Line
