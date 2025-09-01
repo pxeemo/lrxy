@@ -228,7 +228,7 @@ class AudioType(BaseFile):
             >>> audio = load_audio("song.mp3")
             >>> audio.embed_from_file("song.lrc")
         """
-        file = BaseFile(path, match_lrc=True)
+        file = BaseFile(path, match_file=True)
 
         with open(file.path) as lrc:
             self.embed_lyric(lrc.read())
