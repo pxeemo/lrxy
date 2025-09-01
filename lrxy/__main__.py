@@ -55,7 +55,7 @@ def main():
         logger.debug(result)
         if args.embed:
             audio.embed_from_file(args.embed[0])
-            logger.info("Successfully embedded lyric from file")
+            logger.info("Successfully embedded lyric from file: %s", audio)
         elif result['success']:
             plain_lyric = result["data"]["plainLyrics"]
             synced_lyric = result["data"]["syncedLyrics"]
