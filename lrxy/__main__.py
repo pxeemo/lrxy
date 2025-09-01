@@ -66,7 +66,7 @@ def main():
                     "Synced lyric not available. Falling back to plain lyric.")
                 lyric = plain_lyric
             elif not plain_lyric:
-                logger.error("Song has no lyric: %s", audio.path)
+                logger.error("%s: Song has no lyric.", audio.path)
                 continue
 
             try:
@@ -86,8 +86,8 @@ def main():
             except FileExistsError as e:
                 logger.error(e)
 
-        elif result['data'] == 'notfound':
-            logger.error("Music not found: %s", audio)
+        else:
+            logger.error("%s: %s", audio.path, result['error_message'])
 
 
 if __name__ == "__main__":

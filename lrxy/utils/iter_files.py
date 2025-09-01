@@ -88,6 +88,7 @@ def iter_files(
             'path': Path(file_path),
             'success': True,
             'error': None,
+            'error_message': None,
             'music_obj': None,
             'data': None,
         }
@@ -102,7 +103,8 @@ def iter_files(
                     result['data'] = lrc['data']
                 else:
                     result['success'] = False
-                    result['error'] = lrc['message']
+                    result['error'] = lrc['error']
+                    result['error_message'] = lrc['message']
 
         except LrxyException as e:
             result['success'] = False
