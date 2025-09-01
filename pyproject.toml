@@ -13,7 +13,11 @@ dependencies = [
 requires-python = ">=3.10"
 description = "A synced lyric fetcher and embedder for music files"
 readme = "README.md"
+license = { file = "LICENSE.md" }
 keywords = ["synced-lyrics", "lyrics-fetcher"]
+authors = [
+    { name = "pxeemo", email = "pxeemo@gmail.com" }
+]
 
 [project.scripts]
 lrxy = "lrxy.__main__:main"
