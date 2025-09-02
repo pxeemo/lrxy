@@ -30,7 +30,7 @@ class ColoredFormatter(logging.Formatter):
         elif record.levelno == logging.WARNING:
             record.levelname = f"{self.YELLOW}Warning{self.RESET}"
         elif record.levelno == logging.DEBUG:
-            record.levelname = f"{self.CYAN}Debug{self.RESET}"
+            record.levelname = f"{self.CYAN}Debug{self.RESET}: {record.name}"
         return f"{record.levelname}: {record.getMessage()}"
 
 

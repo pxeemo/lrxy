@@ -3,10 +3,11 @@ import argparse
 import logging
 
 from lrxy.utils import iter_files
+from lrxy.converter import convert
 
 
 def main():
-    logger = logging.getLogger(__name__)
+    logger = logging.getLogger()
 
     parser = argparse.ArgumentParser(
         prog="lrxy",
@@ -27,6 +28,12 @@ def main():
     )
 
     parser.add_argument(
+        "-f", "--format",
+        choices=["lrc", "ttml", "json"],
+        default="lrc",
+    )
+
+    parser.add_argument(
         "--log-level",
         choices=["error", "warning", "info", "debug"],
         default="info",
@@ -44,7 +51,7 @@ def main():
     fetch = not args.embed
 
     logger.setLevel(getattr(logging, args.log_level.upper()))
-    logger.debug(args)
+    logger.debug("Parser args: %s", args)
 
     if args.embed and len(args.files[0]) > 1:
         parser.error("Can't use '--embed' with multiple music files")
@@ -59,7 +66,11 @@ def main():
         elif result['success']:
             plain_lyric = result["data"]["plainLyrics"]
             synced_lyric = result["data"]["syncedLyrics"]
-            lyric = synced_lyric
+            lyric = convert(
+                from_format=result["data"]["format"],
+                to_format=args.format,
+                input=synced_lyric,
+            ) if synced_lyric is not None else None
 
             if plain_lyric and not synced_lyric:
                 logger.warning(
@@ -71,7 +82,7 @@ def main():
 
             try:
                 if args.no_embed:
-                    file = audio.path.with_suffix(".lrc")
+                    file = audio.path.with_suffix(f".{args.format}")
                     if file.exists():
                         raise FileExistsError(
                             f"File already exists: {file}")

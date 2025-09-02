@@ -27,8 +27,17 @@ class LyricData(TypedDict):
     """Structure for successful lyric data from LRCLib."""
     id: int
     instrumental: bool
-    plainLyrics: Optional[str]
-    syncedLyrics: Optional[str]
+    plainLyrics: str | None
+    syncedLyrics: str | None
+    provider: str
+    format: str
+
+
+class Result(TypedDict):
+    success: bool
+    data: LyricData | None
+    error: str | None
+    message: str | None
 
 
 class APIResponse(TypedDict):
@@ -100,51 +109,43 @@ def lrclib_api(params: dict) -> APIResponse:
     try:
         # Add timeout to prevent hanging requests
         res = requests.get(API, params=params, timeout=10.0)
-
-        if res.status_code == 200:
-            try:
-                api_data = res.json()
-                # Extract only the fields we care about
-                lyric_data = {
-                    "id": api_data["id"],
-                    "instrumental": api_data["instrumental"],
-                    "plainLyrics": api_data.get("plainLyrics"),
-                    "syncedLyrics": api_data.get("syncedLyrics")
-                }
-                return {
-                    "success": True,
-                    "data": lyric_data,
-                    "error": None,
-                    "message": None
-                }
-            except (KeyError, TypeError) as e:
-                return {
-                    "success": False,
-                    "data": None,
-                    "error": "api",
-                    "message": f"Invalid API response structure: {str(e)}"
-                }
-
-        elif res.status_code == 404:
-            return {
-                "success": False,
-                "data": None,
-                "error": "notfound",
-                "message": "No music found for the given track metadata"
-            }
-
-        else:
-            return {
-                "success": False,
-                "data": None,
-                "error": "api",
-                "message": f"API error {res.status_code}: {res.text}"
-            }
-
-    except requests.exceptions.RequestException as e:
-        return {
+        result: Result = {
             "success": False,
             "data": None,
-            "error": "network",
-            "message": f"Network error: {str(e)}"
+            "error": None,
+            "message": None
         }
+
+        match res.status_code:
+            case 200:
+                try:
+                    api_data = res.json()
+                    # Extract only the fields we care about
+                    lyric_data: LyricData = {
+                        "id": api_data["id"],
+                        "instrumental": api_data["instrumental"],
+                        "plainLyrics": api_data.get("plainLyrics"),
+                        "syncedLyrics": api_data.get("syncedLyrics"),
+                        "provider": "lrclib",
+                        "format": "lrc",
+                    }
+                    result["success"] = True
+                    result["data"] = lyric_data
+
+                except (KeyError, TypeError) as e:
+                    result["error"] = "api"
+                    result["message"] = f"Invalid API response structure: {str(e)}"
+
+            case 404:
+                result["error"] = "notfound"
+                result["message"] = "No music found for the given track metadata"
+
+            case _:
+                result["error"] = "api"
+                result["message"] = f"API error {res.status_code}: {res.text}"
+
+    except requests.exceptions.RequestException as e:
+        result["error"] = "network"
+        result["message"] = f"Network error: {str(e)}"
+
+    return result

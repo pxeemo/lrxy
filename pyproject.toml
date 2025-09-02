@@ -21,6 +21,7 @@ authors = [
 
 [project.scripts]
 lrxy = "lrxy.__main__:main"
+lrxy-convert = "lrxy.converter.main:main"
 
 [project.urls]
 Repository = "https://github.com/pxeemo/lrxy.git"
