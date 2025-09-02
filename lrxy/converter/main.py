@@ -32,10 +32,18 @@ def main():
     )
 
     parser.add_argument(
-        '-f', '--format',
-        metavar='format',
-        dest='format',
+        '-i', '--input-format',
+        choices=["ttml", "lrc", "json"],
         nargs=1,
+        default=None,
+        help='specify the format to convert from'
+    )
+
+    parser.add_argument(
+        '-o', '--output-format',
+        choices=["ttml", "lrc", "json"],
+        nargs=1,
+        default=None,
         help='specify the format to convert to'
     )
 
@@ -49,22 +57,28 @@ def main():
     logger.setLevel(getattr(logging, args.log_level.upper()))
     logger.debug("Parser args: %s", args)
 
-    input = Path(args.input)
-    if args.output == '-':
-        output = sys.stdout
+    input = sys.stdin if args.input == '-' else Path(args.input)
+    output = sys.stdout if args.output == '-' else Path(args.output)
+
+    if args.input_format:
+        input_format = args.input_format[0]
     else:
-        output = Path(args.output)
+        if isinstance(input, Path):
+            match input.suffix:
+                case ".lrc":
+                    input_format = "lrc"
+                case ".ttml":
+                    input_format = "ttml"
+                case ".json":
+                    input_format = "json"
+                case _:
+                    raise UnsupportedFileFormatError(input)
+        else:
+            parser.error("Can't read from stdin"
+                         "without specifying '-i/--input-format'")
 
-    match input.suffix:
-        case ".lrc":
-            input_format = "lrc"
-        case ".ttml":
-            input_format = "ttml"
-        case _:
-            raise UnsupportedFileFormatError(input)
-
-    if args.format:
-        output_format = args.format[0]
+    if args.output_format:
+        output_format = args.output_format[0]
     else:
         if isinstance(output, Path):
             match output.suffix:
@@ -79,8 +93,11 @@ def main():
         else:
             output_format = "json"
 
-    with open(input, "r", encoding="utf-8") as f:
-        input_content = f.read()
+    if isinstance(input, Path):
+        with open(input, "r", encoding="utf-8") as f:
+            input_content = f.read()
+    else:
+        input_content = input.read()
     logger.debug("Input content: %s", input_content)
 
     result = convert(
