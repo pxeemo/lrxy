@@ -25,3 +25,8 @@ class TagError(LrxyException):
     def __init__(self, path: str, tag_name: str) -> None:
         self.message = f"This music '{path}' has no tag {tag_name}"
         super().__init__(self.message)
+
+
+class ParseLyricError(LrxyException):
+    def __init__(self, format: str) -> None:
+        self.message = f"There was a problem parsing {format}"

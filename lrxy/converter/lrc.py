@@ -2,11 +2,12 @@ from typing import List, Tuple
 import json
 import re
 
+from lrxy.exceptions import ParseLyricError
 from .utils import Data, Line, Word, deformatTime, formatLrcTime
 
 
 TIMESTAMP_PATTERN = r'(\d{2}(?::\d{2})+\.(?:\d+))'
-METADATA_LINE_PATTERN = r'^\[(\w\+):(.*)\]$'
+METADATA_LINE_PATTERN = r'^\[(\D+):(.*)\]$'
 LINE_PATTERN = rf'^(\[{TIMESTAMP_PATTERN}\](?:(v\d+):)?)? ?(.*)$'
 WORD_PATTERN = rf'<{TIMESTAMP_PATTERN}>([^<]*)'
 BG_PATTERN = r' ?\[bg:(.*?)\]'
@@ -114,6 +115,7 @@ def generate(data: Data) -> str:
 
 
 def parse(content: str) -> Data:
+    timing = None
     lines: list[Line] = []
     for lrcLine in content.splitlines():
         if re.match(METADATA_LINE_PATTERN, lrcLine):
@@ -121,15 +123,20 @@ def parse(content: str) -> Data:
 
         match = re.match(LINE_PATTERN, lrcLine)
         if not match.group(1):
-            line: Line = {
-                'begin': None,
-                'end': None,
-                'agent': None,
-                'background': None,
-                'content': match.group(4),
-            }
-            lines.append(line)
+            if not lines[-1]['begin']:
+                line: Line = {
+                    'begin': None,
+                    'end': None,
+                    'agent': None,
+                    'background': None,
+                    'content': match.group(4),
+                }
+                if not timing:
+                    timing = 'None'
+                lines.append(line)
             continue
+        elif timing == 'None':
+            raise ParseLyricError('lrc')
 
         beginTime = deformatTime(match.group(2))
         agent, lineContent = match.group(3, 4)
@@ -142,17 +149,23 @@ def parse(content: str) -> Data:
         if lines and not lines[-1]['end']:
             lines[-1]['end'] = line['begin']
 
-        if line['content']:
+        if isinstance(line['content'], list):
             lines.append(line)
+            if not timing:
+                timing = 'Word'
+            elif timing != 'Word':
+                raise ParseLyricError('lrc')
+        elif isinstance(line['content'], str):
+            lines.append(line)
+            if not timing:
+                timing = 'Line'
+            elif timing != 'Line':
+                raise ParseLyricError('lrc')
         lines.extend(bgLines)
 
     data: Data = {
-        'timing': 'None',
+        'timing': timing,
         'lyrics': lines,
     }
-    if isinstance(lines[0]['content'], list):
-        data['timing'] = 'Word'
-    elif lines[0]['begin']:
-        data['timing'] = 'Line'
 
     return data
