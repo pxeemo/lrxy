@@ -127,6 +127,8 @@ def convert(
             data = lrc.parse(input)
         case "ttml":
             data = ttml.parse(input)
+        case "json":
+            data = json.loads(input)
         case _:
             raise UnsupportedFileFormatError(from_format)
     logger.debug("Parsed data: %s", data)
