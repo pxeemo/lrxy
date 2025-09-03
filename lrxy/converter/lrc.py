@@ -123,7 +123,7 @@ def parse(content: str) -> Data:
 
         match = re.match(LINE_PATTERN, lrcLine)
         if not match.group(1):
-            if not lines[-1]['begin']:
+            if not lines or not lines[-1]['begin']:
                 line: Line = {
                     'begin': None,
                     'end': None,
