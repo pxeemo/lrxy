@@ -11,7 +11,7 @@ from lrxy.exceptions import UnsupportedFileFormatError
 
 
 SUPPORTED_INPUTS = ["ttml", "lrc", "srt", "json"]
-SUPPORTED_OUTPUTS = ["ttml", "lrc", "json"]
+SUPPORTED_OUTPUTS = ["ttml", "lrc", "srt", "json"]
 logger = logging.getLogger(__name__)
 
 
@@ -76,7 +76,11 @@ def main():
                 case ".json":
                     input_format = "json"
                 case _:
-                    raise UnsupportedFileFormatError(input)
+                    logger.error(
+                        "%s: Input format '%s' is not supported.",
+                        input,
+                        input.suffix,
+                    )
         else:
             parser.error("Can't read from stdin"
                          "without specifying '-i/--input-format'")
@@ -90,10 +94,16 @@ def main():
                     output_format = "lrc"
                 case ".ttml":
                     output_format = "ttml"
+                case ".srt":
+                    output_format = "srt"
                 case ".json":
                     output_format = "json"
                 case _:
-                    raise UnsupportedFileFormatError(output)
+                    logger.error(
+                        "%s: Output format '%s' is not supported.",
+                        output,
+                        output.suffix,
+                    )
         else:
             output_format = "json"
 
@@ -144,6 +154,20 @@ def convert(
             result = lrc.generate(data)
         case "ttml":
             result = ttml.generate(data)
+        case "srt":
+            if data["timing"] == "None":
+                logger.error(
+                    "The lyric lacks timing information, "
+                    "which is not supported by the SRT format."
+                )
+                sys.exit(1)
+            elif data["timing"] == "Word":
+                logger.warning(
+                    "The lyric is synced at the word level, "
+                    "which the SRT format does not support. "
+                    "It will be converted to line-level syncing."
+                )
+            result = srt.generate(data)
         case _:
             result = json.dumps(data)
     logger.debug("Converted data: %s", result)
