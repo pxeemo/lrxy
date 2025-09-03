@@ -74,10 +74,6 @@ def generate(data: Data) -> str:
             lrcContent += line['content'] + '\n'
             continue
 
-        if lastLineEnd and lastLineEnd != line['begin']:
-            lrcContent += f'[{formatLrcTime(lastLineEnd)}]\n'
-        lastLineEnd = line['end']
-
         if not line['background']:
             lrcContent += f'[{formatLrcTime(line["begin"])}]'
             if line['agent']:
@@ -108,8 +104,10 @@ def generate(data: Data) -> str:
 
         lrcContent += '\n'
 
-    if lastLineEnd and lastLineEnd != line['begin']:
-        lrcContent += f'[{formatLrcTime(lastLineEnd)}]\n'
+        if data['timing'] == 'Line':
+            if lastLineEnd and lastLineEnd != line['begin']:
+                lrcContent += f'[{formatLrcTime(lastLineEnd)}]\n'
+        lastLineEnd = line['end']
 
     return lrcContent
 
