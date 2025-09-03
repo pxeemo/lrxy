@@ -6,10 +6,12 @@ from pathlib import Path
 from typing import Literal
 import logging
 
-from lrxy.converter import lrc, ttml
+from lrxy.converter import lrc, ttml, srt
 from lrxy.exceptions import UnsupportedFileFormatError
 
 
+SUPPORTED_INPUTS = ["ttml", "lrc", "srt", "json"]
+SUPPORTED_OUTPUTS = ["ttml", "lrc", "json"]
 logger = logging.getLogger(__name__)
 
 
@@ -33,7 +35,7 @@ def main():
 
     parser.add_argument(
         '-i', '--input-format',
-        choices=["ttml", "lrc", "json"],
+        choices=SUPPORTED_INPUTS,
         nargs=1,
         default=None,
         help='specify the format to convert from'
@@ -41,7 +43,7 @@ def main():
 
     parser.add_argument(
         '-o', '--output-format',
-        choices=["ttml", "lrc", "json"],
+        choices=SUPPORTED_OUTPUTS,
         nargs=1,
         default=None,
         help='specify the format to convert to'
@@ -69,6 +71,8 @@ def main():
                     input_format = "lrc"
                 case ".ttml":
                     input_format = "ttml"
+                case ".srt":
+                    input_format = "srt"
                 case ".json":
                     input_format = "json"
                 case _:
@@ -114,8 +118,8 @@ def main():
 
 
 def convert(
-    from_format: Literal["lrc", "ttml", "json"],
-    to_format: Literal["lrc", "ttml", "json"],
+    from_format: Literal[*SUPPORTED_INPUTS],
+    to_format: Literal[*SUPPORTED_OUTPUTS],
     input: str,
 ) -> str:
     if from_format == to_format:
@@ -127,6 +131,8 @@ def convert(
             data = lrc.parse(input)
         case "ttml":
             data = ttml.parse(input)
+        case "srt":
+            data = srt.parse(input)
         case "json":
             data = json.loads(input)
         case _:

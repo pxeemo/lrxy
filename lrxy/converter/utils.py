@@ -22,9 +22,11 @@ class Data(TypedDict):
     lyrics: list[Line]
 
 
-def deformatTime(text: str | None) -> int:
+def deformatTime(text: str | None, srt: bool = False) -> int:
     if text is None:
         return
+    if srt:
+        text = text.replace(',', '.')
     if re.match(r'.*\ds$', text):
         text = text.removesuffix("s")
     milis = 0
