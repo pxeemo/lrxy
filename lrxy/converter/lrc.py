@@ -150,13 +150,15 @@ def parse(content: str) -> Data:
             lines[-1]['end'] = line['begin']
 
         if isinstance(line['content'], list):
-            lines.append(line)
+            if line['content']:
+                lines.append(line)
             if not timing:
                 timing = 'Word'
             elif timing != 'Word':
                 raise ParseLyricError('lrc')
         elif isinstance(line['content'], str):
-            lines.append(line)
+            if line['content']:
+                lines.append(line)
             if not timing:
                 timing = 'Line'
             elif timing != 'Line':
