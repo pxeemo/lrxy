@@ -36,7 +36,11 @@ class LrxyID3(AudioType):
         Args:
             audio: Mutagen audio file object to process
         """
-        super().__init__(audio, ["TPE1", "TIT2", "TALB"])
+        super().__init__(audio, {
+            "artist": "TPE1",
+            "title": "TIT2",
+            "album": "TALB",
+        })
 
         self.has_lyric = any([audio.tags.getall(tag) for tag in ['USLT', 'SYLT']])
 

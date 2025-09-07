@@ -34,7 +34,11 @@ class LrxyMP4(AudioType):
         Args:
             audio: Mutagen audio file object to process
         """
-        super().__init__(audio, ["©ART", "©nam", "©alb"])
+        super().__init__(audio, {
+            "artist": "©ART",
+            "title": "©nam",
+            "album": "©alb",
+        })
 
         self.has_lyric = bool(audio.tags.get["©lyr"])
 

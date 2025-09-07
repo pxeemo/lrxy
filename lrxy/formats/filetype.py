@@ -94,7 +94,7 @@ class AudioType(BaseFile):
 
     Args:
         audio: Mutagen audio file object
-        tags_name: List of tag names for [artist, title, album]
+        tag_keys: Tag names for {"artist": str, "title": str, "album": str}
 
     Raises:
         TagError: Missing required metadata tag
@@ -102,11 +102,15 @@ class AudioType(BaseFile):
     Example:
         >>> from mutagen import File
         >>> audio = File("song.mp3")
-        >>> handler = AudioType(audio, ["TPE1", "TIT2", "TALB"])
+        >>> handler = AudioType(audio, {
+        ...     "artist": "TPE1",
+        ...     "title": "TIT2",
+        ...     "album": "TALB",
+        ... })  # tag keys for ID3
         >>> handler.embed_lyric("...")  # Implemented by subclasses
     """
 
-    def __init__(self, audio: FileType, tags_name: List[str]) -> None:
+    def __init__(self, audio: FileType, tag_keys: dict[str, str]) -> None:
         """Initialize with validated audio metadata.
 
         Extracts and validates required metadata fields from audio tags.
@@ -114,7 +118,7 @@ class AudioType(BaseFile):
 
         Args:
             audio: Mutagen audio file object
-            tags_name: Tag names for [artist, title, album]
+            tag_keys: Tag names for {"artist": str, "title": str, "album": str}
 
         Raises:
             TagError: If any required tag is missing
@@ -122,23 +126,27 @@ class AudioType(BaseFile):
         Example:
             >>> from mutagen.mp3 import MP3
             >>> audio = MP3("song.mp3")
-            >>> AudioType(audio, ["TPE1", "TIT2", "TALB"])
+            >>> AudioType(audio, {
+            ...     "artist": "TPE1",
+            ...     "title": "TIT2",
+            ...     "album": "TALB",
+            ... })  # tag keys for ID3
         """
         super().__init__(audio.filename)
 
         self.audio = audio
-        self.artist_name = audio.get(tags_name[0])
-        self.track_name = audio.get(tags_name[1])
-        self.album = audio.get(tags_name[2])
+        self.artist = audio.get(tag_keys["artist"])
+        self.title = audio.get(tag_keys["title"])
+        self.album = audio.get(tag_keys["album"])
         self.duration = str(int(audio.info.length))
 
-        if self.artist_name:
-            self.artist_name = self.artist_name[0]
+        if self.artist:
+            self.artist = self.artist[0]
         else:
             raise TagError(str(self.path), "artist")
 
-        if self.track_name:
-            self.track_name = self.track_name[0]
+        if self.title:
+            self.title = self.title[0]
         else:
             raise TagError(str(self.path), "track")
 
@@ -170,25 +178,25 @@ class AudioType(BaseFile):
 
         Returns:
             Dictionary containing:
-            - artist_name: Primary artist name
-            - track_name: Track title
-            - album_name: Album title
+            - title: Track title
+            - artist: Primary artist name
+            - album: Album title
             - duration: Track duration in seconds (as string)
 
         Example:
             >>> handler.get_tags()
             {
-                'artist_name': 'Artist',
-                'track_name': 'Title',
-                'album_name': 'Album',
+                'title': 'Title',
+                'artist': 'Artist',
+                'album': 'Album',
                 'duration': '245'
             }
         """
         return {
-            "artist_name": self.artist_name,
-            "track_name": self.track_name,
-            "album_name": self.album,
-            "duration": self.duration
+            "title": self.title,
+            "artist": self.artist,
+            "album": self.album,
+            "duration": self.duration,
         }
 
     def embed_lyric(self, lyric: str):

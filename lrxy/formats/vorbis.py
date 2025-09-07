@@ -34,7 +34,11 @@ class LrxyVorbis(AudioType):
         Args:
             audio: Mutagen audio file object to process
         """
-        super().__init__(audio, ["artist", "title", "album"])
+        super().__init__(audio, {
+            "artist": "artist",
+            "title": "title",
+            "album": "album",
+        })
 
         self.has_lyric = bool(audio.tags.get("lyrics"))
 
