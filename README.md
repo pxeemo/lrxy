@@ -54,11 +54,12 @@ lrxy song1.mp3 song2.flac
 
 ```python
 from lrxy.utils import load_audio, iter_files
+from lrxy.providers import lrclib_api
 
 # Load any audio file (MP3, FLAC, M4A, etc.)
-for result in iter_files("song1.mp3", "song2.flac"):
+for result in iter_files("song1.mp3", "song2.flac", provider=lrclib_api):
     audio = result["music_obj"]
-    lyric = result["data"]["syncedLyrics"]
+    lyric = result["data"]["lyric"]
     if lyric:
         audio.embed_lyric(lyric)
 ```
@@ -74,8 +75,8 @@ from lrxy.utils import load_audio
 audio = load_audio("path/to/song.mp3")
 
 # Check required metadata
-print(f"Artist: {audio.artist_name}")
-print(f"Title: {audio.track_name}")
+print(f"Artist: {audio.artist}")
+print(f"Title: {audio.title}")
 print(f"Album: {audio.album}")
 print(f"Duration: {audio.duration} seconds")
 

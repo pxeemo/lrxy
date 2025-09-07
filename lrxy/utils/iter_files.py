@@ -1,4 +1,4 @@
-"""Iterate over audio files with consistent result structure.
+"""Iterate over audio files with consistent result structure and provider flexibility.
 
 Processes audio files sequentially through a generator interface,
 returning standardized results for both successful processing
@@ -6,48 +6,65 @@ and error cases. All yielded results maintain identical dictionary
 structure regardless of outcome, simplifying batch processing.
 
 Each result dictionary always contains these keys:
+- success: Boolean indicating overall operation success
 - path: Absolute file path (Path object)
-- success: Boolean indicating operation success
-- error: Error message if failed (None on success)
 - music_obj: Audio handler instance if loaded (None on failure)
-- lyrics: Fetched lyrics if available (None when not fetched/failed)
-- provider_data: Raw provider response if fetched (None when not fetched/failed)
+- error: Error category if failed (None on success)
+- error_message: Detailed error description if failed (None on success)
+- data: Fetched lyric data if available (None when not fetched/failed)
 
 Args:
     *file_paths: One or more audio file paths (string or Path objects)
-    fetch: Whether to fetch lyrics from LRCLib (default: True)
+    fetch: Whether to fetch lyrics from provider (default: True)
+    provider: Function that takes metadata dict and returns ProviderResponse
+        (default: lrclib_api from lrxy.providers)
 
 Yields:
     dict: Processing result with consistent structure for all cases
 
-    Success case (fetch=True):
+    Success case (fetch=True, lyrics found):
         {
-            'path': Path('/path/to/song.mp3'),
             'success': True,
-            'error': None,
+            'path': Path('/path/to/song.mp3'),
             'music_obj': LrxyID3('/path/to/song.mp3'),
-            'lyrics': 'Verse 1\\nThis is a line...',
-            'provider_data': {'lyrics': '...', 'synced': False, ...}
+            'error': None,
+            'error_message': None,
+            'data': {  # Raw data from provider
+                'id': 123,
+                'instrumental': False,
+                'plainLyrics': 'Verse 1\\nThis is a line...',
+                'syncedLyrics': '...'
+            }
+        }
+
+    Success case (fetch=True, no lyrics found):
+        {
+            'success': False,
+            'path': Path('/path/to/song.mp3'),
+            'music_obj': LrxyID3('/path/to/song.mp3'),
+            'error': 'notfound',
+            'error_message': 'No lyrics found for the given track metadata',
+            'data': None
         }
 
     Success case (fetch=False):
         {
-            'path': Path('/path/to/song.mp3'),
             'success': True,
-            'error': None,
+            'path': Path('/path/to/song.mp3'),
             'music_obj': LrxyID3('/path/to/song.mp3'),
-            'lyrics': None,
-            'provider_data': None
+            'error': None,
+            'error_message': None,
+            'data': None
         }
 
-    Error case:
+    Error case (file loading failure):
         {
-            'path': Path('/path/to/invalid.mp3'),
             'success': False,
-            'error': 'File format not supported',
+            'path': Path('/path/to/invalid.mp3'),
             'music_obj': None,
-            'lyrics': None,
-            'provider_data': None
+            'error': 'File format not supported',
+            'error_message': None,
+            'data': None
         }
 
 Example:
@@ -56,11 +73,13 @@ Example:
     >>> # Process multiple files with lyric fetching
     >>> for result in iter_files("song1.mp3", "song2.flac"):
     ...     if not result['success']:
-    ...         print(f"❌ {result['path'].name}: {result['error']}")
-    ...     elif result['data']['instrumental']:
+    ...         print(f"❌ {result['path'].name}: {result['error_message']}")
+    ...     elif not result['data']:
     ...         print(f"⚠️  {result['music_obj'].track_name}: No lyrics found")
     ...     else:
-    ...         result['music_obj'].embed_lyric(result['data']['syncedLyrics'])
+    ...         # Extract plain lyrics from provider data
+    ...         plain_lyrics = result['data']['plainLyrics']
+    ...         result['music_obj'].embed_lyric(plain_lyrics)
     ...         print(f"✅ {result['music_obj'].track_name}")
     >>>
     >>> # Process without fetching lyrics (metadata inspection)
@@ -68,6 +87,13 @@ Example:
     ...     if result['success']:
     ...         tags = result['music_obj'].get_tags()
     ...         print(f"Artist: {tags['artist_name']}")
+    >>>
+    >>> # Use custom lyric provider
+    >>> from lrxy.providers import musixmatch_api
+    >>> for result in iter_files("song.mp3", provider=musixmatch_api):
+    ...     if result['success'] and result['data']:
+    ...         # Handle provider-specific data structure
+    ...         result['music_obj'].embed_lyric(result['data']['plainLyrics'])
 """
 
 from typing import Union, Generator
