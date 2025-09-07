@@ -19,54 +19,13 @@ from typing import TypedDict, Literal, Optional
 
 import requests
 
+from .types import ProviderResponse, LyricData
+
 
 API: str = "https://lrclib.net/api/get"
 
 
-class LyricData(TypedDict):
-    """Structure for successful lyric data from LRCLib."""
-    id: int
-    instrumental: bool
-    plainLyrics: str | None
-    syncedLyrics: str | None
-    provider: str
-    format: str
-
-
-class Result(TypedDict):
-    success: bool
-    data: LyricData | None
-    error: str | None
-    message: str | None
-
-
-class APIResponse(TypedDict):
-    """Standardized response structure for all LRCLib API interactions.
-
-    Provides consistent shape regardless of outcome, with clear separation
-    of success and error states through designated fields.
-
-    Example:
-        Success: {
-            'success': True,
-            'data': {'id': 123, 'instrumental': False, ...},
-            'error': None,
-            'message': None
-        }
-        Error: {
-            'success': False,
-            'data': None,
-            'error': 'notfound',
-            'message': 'No lyrics found for the given track metadata'
-        }
-    """
-    success: bool
-    data: Optional[LyricData]  # Present only on success
-    error: Optional[Literal["notfound", "network", "api"]]  # Error category
-    message: Optional[str]  # Human-readable error description
-
-
-def lrclib_api(params: dict) -> APIResponse:
+def lrclib_api(params: dict) -> ProviderResponse:
     """Fetch lyrics from LRCLib API using track metadata.
 
     Makes a GET request to LRCLib.net with provided track information
@@ -75,59 +34,62 @@ def lrclib_api(params: dict) -> APIResponse:
 
     Args:
         params: Dictionary containing track metadata with keys:
-            - artist_name: Primary artist name
-            - track_name: Track title
-            - album_name: Album title
+            - artist: Primary artist name
+            - title: Track title
+            - album: Album title
             - duration: Track duration in seconds (as string)
 
     Returns:
         Standardized APIResponse structure with consistent fields:
         - success: Boolean indicating overall operation success
-        - data: Lyric data dictionary (only when success=True)
         - error: Error category (only when success=False)
         - message: Detailed error description (only when success=False)
+        - data: Lyric data dictionary (only when success=True)
 
     Example:
-        >>> from lrxy.providers.lrclib import lrclib_api
+        >>> from lrxy.providers import lrclib_api
         >>>
         >>> result = lrclib_api({
-        ...     "artist_name": "Radiohead",
-        ...     "track_name": "No Surprises",
-        ...     "album_name": "OK Computer",
+        ...     "artist": "Radiohead",
+        ...     "title": "No Surprises",
+        ...     "album": "OK Computer",
         ...     "duration": "216"
         ... })
         >>>
         >>> if result['success']:
-        ...     print(f"Lyrics found: {len(result['data']['plainLyrics'])} chars")
-        ...     audio.embed_lyric(result['data']['plainLyrics'])
+        ...     print(f"Lyrics found: {len(result['data']['lyric'])} chars")
+        ...     audio.embed_lyric(result['data']['lyric'])
         ... else:
         ...     if result['error'] == 'notfound':
         ...         print("No matching lyrics found")
         ...     else:
         ...         print(f"Error ({result['error']}): {result['message']}")
     """
+    result: ProviderResponse = {
+        "success": False,
+        "error": None,
+        "message": None,
+        "data": None,
+    }
+
     try:
         # Add timeout to prevent hanging requests
-        res = requests.get(API, params=params, timeout=10.0)
-        result: Result = {
-            "success": False,
-            "data": None,
-            "error": None,
-            "message": None
+        retake_params = {
+            "track_name": params["title"],
+            "artist_name": params["artist"],
+            "album_name": params["album"],
+            "duration": params["duration"],
         }
-
+        res = requests.get(API, params=retake_params, timeout=10.0)
         match res.status_code:
             case 200:
                 try:
                     api_data = res.json()
-                    # Extract only the fields we care about
                     lyric_data: LyricData = {
-                        "id": api_data["id"],
-                        "instrumental": api_data["instrumental"],
-                        "plainLyrics": api_data.get("plainLyrics"),
-                        "syncedLyrics": api_data.get("syncedLyrics"),
-                        "provider": "lrclib",
                         "format": "lrc",
+                        "timing": None,
+                        "instrumental": api_data["instrumental"],
+                        "lyric": api_data["syncedLyrics"],
                     }
                     result["success"] = True
                     result["data"] = lyric_data

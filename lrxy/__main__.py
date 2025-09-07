@@ -3,7 +3,8 @@ import argparse
 import logging
 
 from lrxy.utils import iter_files
-from lrxy.converter import convert
+from lrxy.converter import convert, SUPPORTED_OUTPUTS
+from lrxy.providers import lrclib_api, musixmatch_api
 
 
 def main():
@@ -11,32 +12,44 @@ def main():
 
     parser = argparse.ArgumentParser(
         prog="lrxy",
-        description="A synced lyric fetcher and embedder for music files"
+        description="A synced lyric fetcher and embedder for music files",
     )
 
     group = parser.add_mutually_exclusive_group()
     group.add_argument(
         "-n", "--no-embed",
         action="store_true",
-        help="write lyrics to separate text files"
+        help="write lyrics to separate text files",
     )
     group.add_argument(
         "--embed",
         metavar="FILE",
         nargs=1,
-        help="embed existing lyric file into music"
+        help="embed existing lyric file into music",
     )
 
     parser.add_argument(
         "-f", "--format",
-        choices=["lrc", "ttml", "json"],
-        default="lrc",
+        choices=SUPPORTED_OUTPUTS,
+        nargs=1,
+        default=["lrc"],
+        help="output lyrics format",
+    )
+
+    parser.add_argument(
+        "-p", "--provider",
+        choices=["lrclib", "musixmatch"],
+        nargs=1,
+        default=["lrclib"],
+        help="provider to fetch lyrics",
     )
 
     parser.add_argument(
         "--log-level",
         choices=["error", "warning", "info", "debug"],
-        default="info",
+        nargs=1,
+        default=["info"],
+        help="command line verbosity",
     )
 
     parser.add_argument(
@@ -44,11 +57,17 @@ def main():
         metavar="MUSIC_FILE",
         action="append",
         nargs="+",
-        help="path of music file to process"
+        help="path of music file to process",
     )
 
     args = parser.parse_args()
     fetch = not args.embed
+
+    match args.provider[0]:
+        case "lrclib":
+            provider = lrclib_api
+        case "musixmatch":
+            provider = musixmatch_api
 
     logger.setLevel(getattr(logging, args.log_level.upper()))
     logger.debug("Parser args: %s", args)
@@ -57,32 +76,27 @@ def main():
         parser.error("Can't use '--embed' with multiple music files")
         sys.exit(2)
 
-    for result in iter_files(*args.files[0], fetch=fetch):
+    for result in iter_files(*args.files[0], fetch=fetch, provider=provider):
         audio = result["music_obj"]
         logger.debug(result)
         if args.embed:
             audio.embed_from_file(args.embed[0])
             logger.info("Successfully embedded lyric from file: %s", audio)
         elif result['success']:
-            plain_lyric = result["data"]["plainLyrics"]
-            synced_lyric = result["data"]["syncedLyrics"]
+            lyric_data = result["data"]
             lyric = convert(
-                from_format=result["data"]["format"],
-                to_format=args.format,
-                input=synced_lyric,
-            ) if synced_lyric is not None else None
+                from_format=lyric_data["format"],
+                to_format=args.format[0],
+                input=lyric_data["lyric"],
+            ) if lyric_data is not None else None
 
-            if plain_lyric and not synced_lyric:
-                logger.warning(
-                    "Synced lyric not available. Falling back to plain lyric.")
-                lyric = plain_lyric
-            elif not plain_lyric:
+            if not lyric:
                 logger.error("%s: Song has no lyric.", audio.path)
                 continue
 
             try:
                 if args.no_embed:
-                    file = audio.path.with_suffix(f".{args.format}")
+                    file = audio.path.with_suffix(f".{args.format[0]}")
                     if file.exists():
                         raise FileExistsError(
                             f"File already exists: {file}")

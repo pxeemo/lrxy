@@ -72,10 +72,14 @@ Example:
 
 from typing import Union, Generator
 from pathlib import Path
+import logging
 
 from lrxy.exceptions import LrxyException
 from lrxy.providers import lrclib_api
 from .audio import load_audio
+
+
+logger = logging.getLogger(__name__)
 
 
 def iter_files(
@@ -85,11 +89,11 @@ def iter_files(
 ) -> Generator[dict, None, None]:
     for file_path in file_paths:
         result = {
-            'path': Path(file_path),
             'success': True,
+            'path': Path(file_path),
+            'music_obj': None,
             'error': None,
             'error_message': None,
-            'music_obj': None,
             'data': None,
         }
 
@@ -98,13 +102,15 @@ def iter_files(
             result['music_obj'] = audio
 
             if fetch:
-                lrc = provider(audio.get_tags())
-                if lrc['success']:
-                    result['data'] = lrc['data']
+                params = audio.get_tags()
+                logger.debug("Music metadata: %s", params)
+                data = provider(params)
+                if data['success']:
+                    result['data'] = data['data']
                 else:
                     result['success'] = False
-                    result['error'] = lrc['error']
-                    result['error_message'] = lrc['message']
+                    result['error'] = data['error']
+                    result['error_message'] = data['message']
 
         except LrxyException as e:
             result['success'] = False
