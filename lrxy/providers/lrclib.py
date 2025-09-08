@@ -18,11 +18,13 @@ Note:
 from typing import TypedDict, Literal, Optional
 
 import requests
+import logging
 
 from .types import ProviderResponse, LyricData
 
 
 API: str = "https://lrclib.net/api/get"
+logger = logging.getLogger(__name__)
 
 
 def lrclib_api(params: dict) -> ProviderResponse:
@@ -85,6 +87,7 @@ def lrclib_api(params: dict) -> ProviderResponse:
             case 200:
                 try:
                     api_data = res.json()
+                    logger.debug("API response: %s\n", api_data)
                     lyric_data: LyricData = {
                         "format": "lrc",
                         "timing": None,
@@ -96,7 +99,7 @@ def lrclib_api(params: dict) -> ProviderResponse:
 
                 except (KeyError, TypeError) as e:
                     result["error"] = "api"
-                    result["message"] = f"Invalid API response structure: {str(e)}"
+                    result["message"] = f"Invalid API response structure: {e}"
 
             case 404:
                 result["error"] = "notfound"

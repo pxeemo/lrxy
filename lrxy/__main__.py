@@ -81,7 +81,7 @@ def main():
         case "musixmatch":
             provider = musixmatch_api
 
-    logger.setLevel(getattr(logging, args.log_level.upper()))
+    logger.setLevel(getattr(logging, args.log_level[0].upper()))
     logger.debug("Parser args: %s", args)
 
     if args.embed and len(args.files[0]) > 1:
@@ -89,8 +89,8 @@ def main():
         sys.exit(2)
 
     for result in iter_files(*args.files[0], fetch=fetch, provider=provider):
+        logger.debug("File data: %s\n", result)
         audio = result["music_obj"]
-        logger.debug(result)
         if args.embed:
             audio.embed_from_file(args.embed[0])
             logger.info("Successfully embedded lyric from file: %s", audio)

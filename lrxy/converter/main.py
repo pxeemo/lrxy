@@ -112,7 +112,7 @@ def main():
             input_content = f.read()
     else:
         input_content = input.read()
-    logger.debug("Input content: %s", input_content)
+    logger.debug("Input content: %s\n", input_content)
 
     result = convert(
         from_format=input_format,
@@ -147,7 +147,7 @@ def convert(
             data = json.loads(input)
         case _:
             raise UnsupportedFileFormatError(from_format)
-    logger.debug("Parsed data: %s", data)
+    logger.debug("Parsed data: %s\n", data)
 
     match to_format:
         case "lrc":
@@ -170,7 +170,7 @@ def convert(
             result = srt.generate(data)
         case _:
             result = json.dumps(data)
-    logger.debug("Converted data: %s", result)
+    logger.debug("Converted data: %s\n", result)
 
     return result
 

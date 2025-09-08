@@ -18,6 +18,7 @@ Note:
 """
 
 import json
+import logging
 
 import requests
 
@@ -25,6 +26,7 @@ from .types import ProviderResponse, LyricData
 
 
 API: str = "https://api.paxsenix.dpdns.org/musixmatch/tracks/match/lyrics"
+logger = logging.getLogger(__name__)
 
 
 def richsync_parse(richsync) -> list:
@@ -196,6 +198,7 @@ def musixmatch_api(params: dict) -> ProviderResponse:
         response = requests.get(API, params=params, timeout=10.0)
         if response.status_code == 200:
             data = response.json()
+            logger.debug("API response: %s\n", data)
             if data["ok"]:
                 if data["track"]["has_lyrics"]:
                     if data["track"]["has_richsync"]:
@@ -209,7 +212,7 @@ def musixmatch_api(params: dict) -> ProviderResponse:
                     "timing": timing,
                     "lyrics": lines,
                 }
-                lyric: LyricData = {
+                lyric_data: LyricData = {
                     "format": "json",
                     "timing": timing,
                     "instrumental": data["track"]["instrumental"],
