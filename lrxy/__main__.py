@@ -50,6 +50,13 @@ def main():
     )
 
     parser.add_argument(
+        "--no-overwrite",
+        dest="overwrite",
+        action="store_false",
+        help="do not overwrite existing lyrics",
+    )
+
+    parser.add_argument(
         "--log-level",
         choices=["error", "warning", "info", "debug"],
         nargs=1,
@@ -103,25 +110,24 @@ def main():
             ) if lyric_data is not None else None
 
             if not lyric:
-                logger.error("%s: Song has no lyric.", audio.path)
+                logger.error("%s: Song has no lyric.", audio)
                 continue
 
-            try:
-                if args.no_embed:
-                    file = audio.path.with_suffix(f".{args.format[0]}")
-                    if file.exists():
-                        raise FileExistsError(
-                            f"File already exists: {file}")
-
+            if args.no_embed:
+                file = audio.path.with_suffix(f".{args.format[0]}")
+                if file.exists() and not args.overwrite:
+                    logger.error("%s: File already exists.", file)
+                else:
                     with open(file, "w", encoding="utf-8") as f:
                         f.write(lyric)
 
                     logger.info("Successfully written to: %s", file)
+            else:
+                if audio.has_lyric and not args.overwrite:
+                    logger.error("%s: Audio file already has embedded lyric.", audio)
                 else:
                     audio.embed_lyric(lyric)
                     logger.info("Successfully embedded the lyric: %s", audio)
-            except FileExistsError as e:
-                logger.error(e)
 
         else:
             logger.error("%s: %s", audio.path, result['error_message'])
