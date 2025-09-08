@@ -4,26 +4,26 @@ class LrxyException(Exception):
 
 
 class PathNotExistsError(LrxyException):
-    def __init__(self, path: str) -> None:
-        self.message = f"The path '{path}' does not exist"
+    def __init__(self) -> None:
+        self.message = f"Path does not exist."
         super().__init__(self.message)
 
 
 class FileError(LrxyException):
-    def __init__(self, path: str) -> None:
-        self.message = f"This path '{path}' is not a file"
+    def __init__(self) -> None:
+        self.message = f"Path is not a file."
         super().__init__(self.message)
 
 
 class UnsupportedFileFormatError(LrxyException):
-    def __init__(self, unsupported_format: str) -> None:
-        self.message = f"Unsupported format: '{unsupported_format}'"
+    def __init__(self) -> None:
+        self.message = f"Unsupported file format."
         super().__init__(self.message)
 
 
 class TagError(LrxyException):
-    def __init__(self, path: str, tag_name: str) -> None:
-        self.message = f"This music '{path}' has no tag {tag_name}"
+    def __init__(self, tag_name: str) -> None:
+        self.message = f"File has no tag {tag_name}"
         super().__init__(self.message)
 
 

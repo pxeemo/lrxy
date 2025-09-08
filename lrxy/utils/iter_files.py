@@ -141,5 +141,6 @@ def iter_files(
         except LrxyException as e:
             result['success'] = False
             result['error'] = str(e)
+            result['error_message'] = str(e.message)
 
         yield result

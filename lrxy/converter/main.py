@@ -146,7 +146,7 @@ def convert(
         case "json":
             data = json.loads(input)
         case _:
-            raise UnsupportedFileFormatError(from_format)
+            raise UnsupportedFileFormatError()
     logger.debug("Parsed data: %s\n", data)
 
     match to_format:

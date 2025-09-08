@@ -130,7 +130,7 @@ def main():
                     logger.info("Successfully embedded the lyric: %s", audio)
 
         else:
-            logger.error("%s: %s", audio.path, result['error_message'])
+            logger.error("%s: %s", result['path'], result['error_message'])
 
 
 if __name__ == "__main__":

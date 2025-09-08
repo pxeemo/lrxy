@@ -72,10 +72,10 @@ class BaseFile:
                 "The path must be a string or a pathlib.Path object")
 
         if not self.path.exists():
-            raise PathNotExistsError(str(self.path))
+            raise PathNotExistsError()
 
         if not self.path.is_file():
-            raise FileError(str(self.path))
+            raise FileError()
 
         self.extension = self.path.suffix
 
@@ -143,17 +143,17 @@ class AudioType(BaseFile):
         if self.artist:
             self.artist = self.artist[0]
         else:
-            raise TagError(str(self.path), "artist")
+            raise TagError("artist")
 
         if self.title:
             self.title = self.title[0]
         else:
-            raise TagError(str(self.path), "track")
+            raise TagError("title")
 
         if self.album:
             self.album = self.album[0]
         else:
-            raise TagError(str(self.path), "album")
+            raise TagError("album")
 
     def __repr__(self):
         """Return formal string representation.
