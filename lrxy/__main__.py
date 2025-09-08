@@ -7,6 +7,11 @@ from lrxy.converter import convert, SUPPORTED_OUTPUTS
 from lrxy.providers import lrclib_api, musixmatch_api
 
 
+def get_version():
+    from importlib_metadata import version
+    return version("lrxy")
+
+
 def main():
     logger = logging.getLogger()
 
@@ -50,6 +55,13 @@ def main():
         nargs=1,
         default=["info"],
         help="command line verbosity",
+    )
+
+    parser.add_argument(
+        "-v", "--version",
+        action="version",
+        version=f"%(prog)s {get_version()}",
+        help="show current lrxy version and exit",
     )
 
     parser.add_argument(
