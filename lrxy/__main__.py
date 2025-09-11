@@ -39,7 +39,7 @@ def main():
         "-f", "--format",
         choices=SUPPORTED_OUTPUTS,
         nargs=1,
-        default=["lrc"],
+        default=[None],
         help="output lyrics format",
     )
 
@@ -108,11 +108,16 @@ def main():
             logger.info("Successfully embedded lyric from file: %s", audio)
         elif result['success']:
             lyric_data = result["data"]
-            lyric = convert(
-                from_format=lyric_data["format"],
-                to_format=args.format[0],
-                input=lyric_data["lyric"],
-            ) if lyric_data is not None else None
+            lyric = None
+            if lyric_data:
+                if not args.format[0] and lyric_data["format"] != "json":
+                    lyric = lyric_data["lyric"]
+                else:
+                    lyric = convert(
+                        from_format=lyric_data["format"],
+                        to_format=args.format[0],
+                        input=lyric_data["lyric"],
+                    )
 
             if not lyric:
                 logger.error("%s: Song has no lyric.", audio)
