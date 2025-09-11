@@ -6,7 +6,7 @@ import argcomplete
 
 from lrxy.utils import iter_files
 from lrxy.converter import convert, SUPPORTED_OUTPUTS
-from lrxy.providers import lrclib_api, musixmatch_api
+from lrxy.providers import lrclib_api, musixmatch_api, applemusic_api
 
 
 def get_version():
@@ -45,7 +45,7 @@ def main():
 
     parser.add_argument(
         "-p", "--provider",
-        choices=["lrclib", "musixmatch"],
+        choices=["lrclib", "musixmatch", "applemusic"],
         nargs=1,
         default=["lrclib"],
         help="provider to fetch lyrics",
@@ -90,6 +90,8 @@ def main():
             provider = lrclib_api
         case "musixmatch":
             provider = musixmatch_api
+        case "applemusic":
+            provider = applemusic_api
 
     logger.setLevel(getattr(logging, args.log_level[0].upper()))
     logger.debug("Parser args: %s", args)

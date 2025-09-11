@@ -20,7 +20,7 @@ from typing import TypedDict, Literal, Optional
 import requests
 import logging
 
-from .types import ProviderResponse, LyricData
+from .utils import ProviderResponse, LyricData
 
 
 API: str = "https://lrclib.net/api/get"

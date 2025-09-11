@@ -5,12 +5,11 @@ class LyricData(TypedDict):
     format: str
     timing: Literal["Word", "Line", "None"] | None
     instrumental: bool
-    lyrics: str | dict | None
+    lyric: str | dict | None
 
 
 class ProviderResponse(TypedDict):
     success: bool
-    data: LyricData | None
-    error: Literal["notfound", "network", "api", "unknown"] | None
+    error: Literal["notfound", "network", "api", "nolyric"] | None
     message: str | None
-    provider: str
+    data: LyricData | None

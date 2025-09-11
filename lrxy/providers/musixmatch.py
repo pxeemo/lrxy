@@ -22,7 +22,7 @@ import logging
 
 import requests
 
-from .types import ProviderResponse, LyricData
+from .utils import ProviderResponse, LyricData
 
 
 API: str = "https://api.paxsenix.dpdns.org/musixmatch/tracks/match/lyrics"
