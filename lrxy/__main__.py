@@ -1,6 +1,8 @@
 import sys
-import argparse
 import logging
+
+import argparse
+import argcomplete
 
 from lrxy.utils import iter_files
 from lrxy.converter import convert, SUPPORTED_OUTPUTS
@@ -79,6 +81,7 @@ def main():
         help="path of music file to process",
     )
 
+    argcomplete.autocomplete(parser)
     args = parser.parse_args()
     fetch = not args.embed
 
