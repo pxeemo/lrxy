@@ -122,15 +122,16 @@ def lyric_parse(data) -> list:
     """
     lines = []
     for lyricline in data:
+        begin = int(lyricline["time"]["total"] * 1000)
         line = {
-            "begin": lyricline["time"]["total"] * 1000,
+            "begin": begin,
             "end": None,
             "background": False,
             "agent": None,
             "content": lyricline["text"]
         }
         if lines:
-            lines[-1]["end"] = line["begin"]
+            lines[-1]["end"] = begin
         if line["content"]:
             lines.append(line)
     return lines
@@ -200,12 +201,11 @@ def musixmatch_api(params: dict) -> ProviderResponse:
         data = response.json()
         logger.debug("API response: %s\n", data)
         if data["track"]["has_lyrics"]:
-            if data["track"]["has_richsync"]:
-                timing = "Word"
-                lines = richsync_parse(data["richsync"])
-            else:
-                timing = "Line"
-                lines = lyric_parse(data["lyrics"])
+            # if data["track"]["has_richsync"]:
+            #     timing = "Word"
+            #     lines = richsync_parse(data["richsync"])
+            timing = "Line"
+            lines = lyric_parse(data["lyrics"])
 
         lyric_content = {
             "timing": timing,

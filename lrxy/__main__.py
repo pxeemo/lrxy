@@ -115,7 +115,7 @@ def main():
                 else:
                     lyric = convert(
                         from_format=lyric_data["format"],
-                        to_format=args.format[0],
+                        to_format=args.format[0] or "lrc",
                         input=lyric_data["lyric"],
                     )
 
