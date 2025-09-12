@@ -7,6 +7,7 @@ import argcomplete
 from lrxy.utils import iter_files
 from lrxy.converter import convert, SUPPORTED_OUTPUTS
 from lrxy.providers import lrclib_api, musixmatch_api, applemusic_api
+from lrxy import completions
 
 
 def get_version():
@@ -64,6 +65,15 @@ def main():
         nargs=1,
         default=["info"],
         help="command line verbosity",
+    )
+
+    parser.add_argument(
+        "--shell-completion",
+        nargs=1,
+        choices=["bash", "zsh", "fish"],
+        type=completions.generate_completion,
+        dest="completion",
+        help="provide shell completion",
     )
 
     parser.add_argument(
