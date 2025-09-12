@@ -196,40 +196,37 @@ def musixmatch_api(params: dict) -> ProviderResponse:
 
     try:
         response = requests.get(API, params=params, timeout=10.0)
-        if response.status_code == 200:
-            data = response.json()
-            logger.debug("API response: %s\n", data)
-            if data["ok"]:
-                if data["track"]["has_lyrics"]:
-                    if data["track"]["has_richsync"]:
-                        timing = "Word"
-                        lines = richsync_parse(data["richsync"])
-                    else:
-                        timing = "Line"
-                        lines = lyric_parse(data["lyrics"])
-
-                lyric_content = {
-                    "timing": timing,
-                    "lyrics": lines,
-                }
-                lyric_data: LyricData = {
-                    "format": "json",
-                    "timing": timing,
-                    "instrumental": data["track"]["instrumental"],
-                    "lyric": json.dumps(lyric_content),
-                }
-
-                result["success"] = True
-                result["data"] = lyric_data
+        response.raise_for_status()
+        data = response.json()
+        logger.debug("API response: %s\n", data)
+        if data["track"]["has_lyrics"]:
+            if data["track"]["has_richsync"]:
+                timing = "Word"
+                lines = richsync_parse(data["richsync"])
             else:
-                result["error"] = "api"
-                result["message"] = data["message"]
-        else:
-            result["error"] = "api"
-            result["message"] = "Failed to fetch lyric"
+                timing = "Line"
+                lines = lyric_parse(data["lyrics"])
+
+        lyric_content = {
+            "timing": timing,
+            "lyrics": lines,
+        }
+        lyric_data: LyricData = {
+            "format": "json",
+            "timing": timing,
+            "instrumental": data["track"]["instrumental"],
+            "lyric": json.dumps(lyric_content),
+        }
+
+        result["success"] = True
+        result["data"] = lyric_data
 
     except requests.exceptions.RequestException as e:
-        result["error"] = "network"
-        result["message"] = f"Network error: {str(e)}"
+        if e.response.status_code == 404:
+            result["error"] = "notfound"
+            result["message"] = "No music found for the given track metadata"
+        else:
+            result["error"] = "network"
+            result["message"] = f"Failed to fetch: {e}"
 
     return result

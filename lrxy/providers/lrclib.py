@@ -82,35 +82,25 @@ def lrclib_api(params: dict) -> ProviderResponse:
             "album_name": params["album"],
             "duration": params["duration"],
         }
-        res = requests.get(API, params=retake_params, timeout=10.0)
-        match res.status_code:
-            case 200:
-                try:
-                    api_data = res.json()
-                    logger.debug("API response: %s\n", api_data)
-                    lyric_data: LyricData = {
-                        "format": "lrc",
-                        "timing": None,
-                        "instrumental": api_data["instrumental"],
-                        "lyric": api_data["syncedLyrics"],
-                    }
-                    result["success"] = True
-                    result["data"] = lyric_data
-
-                except (KeyError, TypeError) as e:
-                    result["error"] = "api"
-                    result["message"] = f"Invalid API response structure: {e}"
-
-            case 404:
-                result["error"] = "notfound"
-                result["message"] = "No music found for the given track metadata"
-
-            case _:
-                result["error"] = "api"
-                result["message"] = f"API error {res.status_code}: {res.text}"
+        response = requests.get(API, params=retake_params, timeout=10.0)
+        response.raise_for_status()
+        api_data = res.json()
+        logger.debug("API response: %s\n", api_data)
+        lyric_data: LyricData = {
+            "format": "lrc",
+            "timing": None,
+            "instrumental": api_data["instrumental"],
+            "lyric": api_data["syncedLyrics"],
+        }
+        result["success"] = True
+        result["data"] = lyric_data
 
     except requests.exceptions.RequestException as e:
-        result["error"] = "network"
-        result["message"] = f"Network error: {str(e)}"
+        if e.response.status_code == 404:
+            result["error"] = "notfound"
+            result["message"] = "No music found for the given track metadata"
+        else:
+            result["error"] = "network"
+            result["message"] = f"Failed to fetch: {e}"
 
     return result
