@@ -1,13 +1,16 @@
 #!/usr/bin/env python
 import sys
 import json
-import argparse
 from pathlib import Path
 from typing import Literal
 import logging
 
+import argparse
+import argcomplete
+
 from lrxy.converter import lrc, ttml, srt
 from lrxy.exceptions import UnsupportedFileFormatError
+from lrxy import completions
 
 
 SUPPORTED_INPUTS = ["ttml", "lrc", "srt", "json"]
@@ -55,6 +58,16 @@ def main():
         default="info",
     )
 
+    parser.add_argument(
+        "--shell-completion",
+        nargs=1,
+        choices=["bash", "zsh", "fish"],
+        type=completions.generate_completion,
+        dest="completion",
+        help="provide shell completion",
+    )
+
+    argcomplete.autocomplete(parser)
     args = parser.parse_args()
     logger.setLevel(getattr(logging, args.log_level.upper()))
     logger.debug("Parser args: %s", args)

@@ -1,23 +1,22 @@
 import sys
 import subprocess
-
-import argparse
-import argcomplete
+from pathlib import Path
 
 
 def generate_completion(shell):
-    command = ["register-python-argcomplete", "--shell", shell, "lrxy"]
+    command_name = Path(sys.argv[0]).name
+    command = ["register-python-argcomplete", "--shell", shell, command_name]
 
     if sys.stdout.isatty():
         print("Pipe this command into the desired output path. e.g.:")
-        print(f"lrxy --shell-completion {shell} > ", end="")
+        print(f"{command_name} --shell-completion {shell} > ", end="")
         match shell:
             case "bash":
-                print("~/.local/share/bash-completion/completions/lrxy")
+                print(f"~/.local/share/bash-completion/completions/{command_name}")
             case "zsh":
-                print("~/.zsh/completion/_lrxy")
+                print(f"~/.zsh/completion/_{command_name}")
             case "fish":
-                print("~/.config/fish/completions/lrxy.fish")
+                print(f"~/.config/fish/completions/{command_name}.fish")
 
     else:
         subprocess.run(command)
