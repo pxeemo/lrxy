@@ -84,7 +84,7 @@ def lrclib_api(params: dict) -> ProviderResponse:
         }
         response = requests.get(API, params=retake_params, timeout=10.0)
         response.raise_for_status()
-        api_data = res.json()
+        api_data = response.json()
         logger.debug("API response: %s\n", api_data)
         lyric_data: LyricData = {
             "format": "lrc",
