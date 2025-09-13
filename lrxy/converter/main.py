@@ -41,7 +41,7 @@ def main():
         choices=SUPPORTED_INPUTS,
         nargs=1,
         default=None,
-        help='specify the format to convert from'
+        help='input lyric file format'
     )
 
     parser.add_argument(
@@ -49,13 +49,7 @@ def main():
         choices=SUPPORTED_OUTPUTS,
         nargs=1,
         default=None,
-        help='specify the format to convert to'
-    )
-
-    parser.add_argument(
-        "--log-level",
-        choices=["error", "warning", "info", "debug"],
-        default="info",
+        help='output lyric file format'
     )
 
     parser.add_argument(
@@ -67,9 +61,17 @@ def main():
         help="provide shell completion",
     )
 
+    parser.add_argument(
+        "--log-level",
+        choices=["error", "warning", "info", "debug"],
+        nargs=1,
+        default=["info"],
+        help="command line verbosity",
+    )
+
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
-    logger.setLevel(getattr(logging, args.log_level.upper()))
+    logger.setLevel(getattr(logging, args.log_level[0].upper()))
     logger.debug("Parser args: %s", args)
 
     input = sys.stdin if args.input == '-' else Path(args.input)

@@ -60,20 +60,20 @@ def main():
     )
 
     parser.add_argument(
-        "--log-level",
-        choices=["error", "warning", "info", "debug"],
-        nargs=1,
-        default=["info"],
-        help="command line verbosity",
-    )
-
-    parser.add_argument(
         "--shell-completion",
         nargs=1,
         choices=["bash", "zsh", "fish"],
         type=completions.generate_completion,
         dest="completion",
         help="provide shell completion",
+    )
+
+    parser.add_argument(
+        "--log-level",
+        choices=["error", "warning", "info", "debug"],
+        nargs=1,
+        default=["info"],
+        help="command line verbosity",
     )
 
     parser.add_argument(
