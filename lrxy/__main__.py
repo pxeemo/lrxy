@@ -32,23 +32,20 @@ def main():
     group.add_argument(
         "--embed",
         metavar="FILE",
-        nargs=1,
         help="embed existing lyric file into music",
     )
 
     parser.add_argument(
         "-f", "--format",
         choices=SUPPORTED_OUTPUTS,
-        nargs=1,
-        default=[None],
+        default=None,
         help="output lyrics format",
     )
 
     parser.add_argument(
         "-p", "--provider",
         choices=["lrclib", "musixmatch", "applemusic"],
-        nargs=1,
-        default=["lrclib"],
+        default="lrclib",
         help="provider to fetch lyrics",
     )
 
@@ -61,7 +58,6 @@ def main():
 
     parser.add_argument(
         "--shell-completion",
-        nargs=1,
         choices=["bash", "zsh", "fish"],
         type=completions.generate_completion,
         dest="completion",
@@ -71,8 +67,7 @@ def main():
     parser.add_argument(
         "--log-level",
         choices=["error", "warning", "info", "debug"],
-        nargs=1,
-        default=["info"],
+        default="info",
         help="command line verbosity",
     )
 
@@ -86,7 +81,7 @@ def main():
     parser.add_argument(
         "files",
         metavar="MUSIC_FILE",
-        action="append",
+        action="extend",
         nargs="+",
         help="path of music file to process",
     )
@@ -95,7 +90,7 @@ def main():
     args = parser.parse_args()
     fetch = not args.embed
 
-    match args.provider[0]:
+    match args.provider:
         case "lrclib":
             provider = lrclib_api
         case "musixmatch":
@@ -103,29 +98,29 @@ def main():
         case "applemusic":
             provider = applemusic_api
 
-    logger.setLevel(getattr(logging, args.log_level[0].upper()))
+    logger.setLevel(getattr(logging, args.log_level.upper()))
     logger.debug("Parser args: %s", args)
 
-    if args.embed and len(args.files[0]) > 1:
+    if args.embed and len(args.files) > 1:
         parser.error("Can't use '--embed' with multiple music files")
         sys.exit(2)
 
-    for result in iter_files(*args.files[0], fetch=fetch, provider=provider):
+    for result in iter_files(*args.files, fetch=fetch, provider=provider):
         logger.debug("File data: %s\n", result)
         audio = result["music_obj"]
         if args.embed:
-            audio.embed_from_file(args.embed[0])
+            audio.embed_from_file(args.embed)
             logger.info("Successfully embedded lyric from file: %s", audio)
         elif result['success']:
             lyric_data = result["data"]
             lyric = None
             if lyric_data:
-                if not args.format[0] and lyric_data["format"] != "json":
+                if not args.format and lyric_data["format"] != "json":
                     lyric = lyric_data["lyric"]
                 else:
                     lyric = convert(
                         from_format=lyric_data["format"],
-                        to_format=args.format[0] or "lrc",
+                        to_format=args.format or "lrc",
                         input=lyric_data["lyric"],
                     )
 
@@ -134,7 +129,7 @@ def main():
                 continue
 
             if args.no_embed:
-                file = audio.path.with_suffix(f".{args.format[0]}")
+                file = audio.path.with_suffix(f".{args.format}")
                 if file.exists() and not args.overwrite:
                     logger.error("%s: File already exists.", file)
                 else:
