@@ -17,6 +17,7 @@ Note:
     that detailed timing data in a structured format.
 """
 
+import os
 import json
 import logging
 
@@ -26,6 +27,11 @@ from .utils import ProviderResponse, LyricData
 
 
 API: str = "https://api.paxsenix.dpdns.org/musixmatch/tracks/match/lyrics"
+API_TOKEN = os.getenv("PAXSENIX_API_TOKEN")
+HEADERS = {
+    "Authorization": f"Bearer {API_TOKEN}",
+    "Content-Type": "application/json",
+}
 logger = logging.getLogger(__name__)
 
 
@@ -194,12 +200,16 @@ def musixmatch_api(params: dict) -> ProviderResponse:
         "message": None,
         "data": None,
     }
+    if API_TOKEN:
+        logger.debug("Using api token $PAXSENIX_API_TOKEN")
+    else:
+        logger.warn("API token $PAXSENIX_API_TOKEN not found")
 
     try:
         response = requests.get(API, params=params, timeout=10.0)
         response.raise_for_status()
         data = response.json()
-        logger.debug("API response: %s\n", data)
+        logger.debug("API response: %s\n", json.dumps(data))
         if data["track"]["has_lyrics"]:
             # if data["track"]["has_richsync"]:
             #     timing = "Word"

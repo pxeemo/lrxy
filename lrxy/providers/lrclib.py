@@ -16,9 +16,10 @@ Note:
 """
 
 from typing import TypedDict, Literal, Optional
+import logging
+import json
 
 import requests
-import logging
 
 from .utils import ProviderResponse, LyricData
 
@@ -84,13 +85,13 @@ def lrclib_api(params: dict) -> ProviderResponse:
         }
         response = requests.get(API, params=retake_params, timeout=10.0)
         response.raise_for_status()
-        api_data = response.json()
-        logger.debug("API response: %s\n", api_data)
+        data = response.json()
+        logger.debug("API response: %s\n", json.dumps(data))
         lyric_data: LyricData = {
             "format": "lrc",
             "timing": None,
-            "instrumental": api_data["instrumental"],
-            "lyric": api_data["syncedLyrics"],
+            "instrumental": data["instrumental"],
+            "lyric": data["syncedLyrics"],
         }
         result["success"] = True
         result["data"] = lyric_data
