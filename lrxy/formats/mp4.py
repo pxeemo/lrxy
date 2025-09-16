@@ -40,7 +40,7 @@ class LrxyMP4(AudioType):
             "album": "©alb",
         })
 
-        self.has_lyric = bool(audio.tags.get["©lyr"])
+        self.has_lyric = bool(audio.tags.get("©lyr"))
 
     def embed_lyric(self, lyric: str) -> None:
         """Embed lyrics into the audio file's MP4 metadata.
