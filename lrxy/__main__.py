@@ -113,20 +113,19 @@ def main():
             logger.info("Successfully embedded lyric from file: %s", audio)
         elif result['success']:
             lyric_data = result["data"]
-            lyric = None
-            if lyric_data:
-                if not args.format and lyric_data["format"] != "json":
-                    lyric = lyric_data["lyric"]
-                else:
-                    lyric = convert(
-                        from_format=lyric_data["format"],
-                        to_format=args.format or "lrc",
-                        input=lyric_data["lyric"],
-                    )
 
-            if not lyric:
-                logger.error("%s: Song has no lyric.", audio)
+            if not lyric_data["hasLyric"]:
+                logger.error("%s: Song has no synced lyric.", audio)
                 continue
+
+            if not args.format and lyric_data["format"] != "json":
+                lyric = lyric_data["lyric"]
+            else:
+                lyric = convert(
+                    from_format=lyric_data["format"],
+                    to_format=args.format or "lrc",
+                    input=lyric_data["lyric"],
+                )
 
             if args.no_embed:
                 file = audio.path.with_suffix(f".{args.format}")

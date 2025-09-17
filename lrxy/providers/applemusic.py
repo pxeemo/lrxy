@@ -38,30 +38,34 @@ def applemusic_api(params: dict) -> ProviderResponse:
             timeout=10.0,
         )
         response.raise_for_status()
-        searchResult = response.json()
-        first_match = searchResult["results"][0]
+        search_result = response.json()
+        first_match = search_result["results"][0]
         logger.debug("Search result: %s\n", json.dumps(first_match))
-        trackId = first_match['playParams']['id']
-        hasLyric = first_match["hasTimeSyncedLyrics"]
-        if hasLyric:
+        track_id = first_match['playParams']['id']
+        has_lyric = first_match["hasTimeSyncedLyrics"]
+        lyric_data: LyricData = {
+            'format': "ttml",
+            'timing': None,
+            'instrumental': False,
+            'hasLyric': has_lyric,
+            'lyric': None,
+        }
+
+        if has_lyric:
             response = requests.get(
                 LYRICS_API,
                 headers=HEADERS,
-                params={'id': trackId},
+                params={'id': track_id},
                 timeout=10.0,
             )
             response.raise_for_status()
             data = response.json()
             logger.debug("Track's lyric: %s\n", json.dumps(data))
-            lyricData: LyricData = {
-                'format': "ttml",
-                'timing': data["type"],
-                'instrumental': False,
-                'lyric': data["ttml_content"],
-            }
+            lyric_data['timing'] = data['type']
+            lyric_data['lyric'] = data['ttml_content']
 
-            result["success"] = True
-            result["data"] = lyricData
+        result["success"] = True
+        result["data"] = lyric_data
 
     except requests.exceptions.RequestException as e:
         if e.response.status_code == 404:

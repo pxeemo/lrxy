@@ -91,6 +91,7 @@ def lrclib_api(params: dict) -> ProviderResponse:
             "format": "lrc",
             "timing": None,
             "instrumental": data["instrumental"],
+            "hasLyric": bool(data["syncedLyrics"]),
             "lyric": data["syncedLyrics"],
         }
         result["success"] = True

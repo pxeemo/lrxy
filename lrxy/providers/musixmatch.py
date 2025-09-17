@@ -225,6 +225,7 @@ def musixmatch_api(params: dict) -> ProviderResponse:
             "format": "json",
             "timing": timing,
             "instrumental": data["track"]["instrumental"],
+            "hasLyric": data["track"]["has_lyrics"],
             "lyric": json.dumps(lyric_content),
         }
 
