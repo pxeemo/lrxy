@@ -68,7 +68,7 @@ def applemusic_api(params: dict) -> ProviderResponse:
         result["data"] = lyric_data
 
     except requests.exceptions.RequestException as e:
-        if e.response.status_code == 404:
+        if e.response and e.response.status_code == 404:
             result["error"] = "notfound"
             result["message"] = "No music found for the given track metadata"
         else:
