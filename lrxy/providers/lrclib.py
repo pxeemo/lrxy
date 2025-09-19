@@ -15,58 +15,57 @@ Note:
     so accurate duration is critical for finding the correct lyrics.
 """
 
-from typing import TypedDict, Literal, Optional
 import logging
 import json
 
 import requests
 
-from .utils import ProviderResponse, LyricData
+from .utils import MetadataParams, ProviderResponse, LyricData
 
 
 API: str = "https://lrclib.net/api/get"
 logger = logging.getLogger(__name__)
 
 
-def lrclib_api(params: dict) -> ProviderResponse:
+def lrclib_api(params: MetadataParams) -> ProviderResponse:
     """Fetch lyrics from LRCLib API using track metadata.
 
     Makes a GET request to LRCLib.net with provided track information
     and processes the response into a standardized format with clear
     error categorization.
 
-    Args:
-        params: Dictionary containing track metadata with keys:
-            - artist: Primary artist name
-            - title: Track title
-            - album: Album title
-            - duration: Track duration in seconds (as string)
+    Args: params (MetadataParams): Dictionary containing track metadata with keys:
+        artist (str): artist name
+        title (str): track title
+        album (str): album name
+        duration (str): track duration in seconds
 
-    Returns:
-        Standardized APIResponse structure with consistent fields:
-        - success: Boolean indicating overall operation success
-        - error: Error category (only when success=False)
-        - message: Detailed error description (only when success=False)
-        - data: Lyric data dictionary (only when success=True)
+    Returns: Standardized APIResponse structure with consistent fields (LyricData):
+        success (boolean): Indicating overall operation success
+        error (str): Error category (only when success=False)
+        message (str): Detailed error description (only when success=False)
+        data (LyricData): Lyric data dictionary (only when success=True)
 
     Example:
-        >>> from lrxy.providers import lrclib_api
-        >>>
-        >>> result = lrclib_api({
-        ...     "artist": "Radiohead",
-        ...     "title": "No Surprises",
-        ...     "album": "OK Computer",
-        ...     "duration": "216"
-        ... })
-        >>>
-        >>> if result['success']:
-        ...     print(f"Lyrics found: {len(result['data']['lyric'])} chars")
-        ...     audio.embed_lyric(result['data']['lyric'])
-        ... else:
-        ...     if result['error'] == 'notfound':
-        ...         print("No matching lyrics found")
-        ...     else:
-        ...         print(f"Error ({result['error']}): {result['message']}")
+        ```python
+        from lrxy.providers import lrclib_api
+        
+        result = lrclib_api({
+            "artist": "Radiohead",
+            "title": "No Surprises",
+            "album": "OK Computer",
+            "duration": "216"
+        })
+        
+        if result['success']:
+            print(f"Lyrics found.")
+            audio.embed_lyric(result['data']['lyric'])
+        else:
+            if result['error'] == 'notfound':
+                print("No matching lyrics found")
+            else:
+                print(f"Error ({result['error']}): {result['message']}")
+        ```
     """
     result: ProviderResponse = {
         "success": False,

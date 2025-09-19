@@ -23,7 +23,7 @@ import logging
 
 import requests
 
-from .utils import ProviderResponse, LyricData
+from .utils import MetadataParams, ProviderResponse, LyricData
 
 
 API: str = "https://api.paxsenix.dpdns.org/musixmatch/tracks/match/lyrics"
@@ -143,56 +143,45 @@ def lyric_parse(data) -> list:
     return lines
 
 
-def musixmatch_api(params: dict) -> ProviderResponse:
+def musixmatch_api(params: MetadataParams) -> ProviderResponse:
     """Fetch lyrics from Musixmatch API using track metadata.
 
     Makes a GET request to the Musixmatch API with provided track
     information and processes the response into lrxy's standardized
     format with detailed timing information when available.
 
-    Args:
-        params: Dictionary containing track metadata with keys:
-            - artist: Primary artist name
-            - title: Track title
-            - album: Album title
-            - duration: Track duration in seconds (as string)
+    Args: params (MetadataParams): Dictionary containing track metadata with keys:
+        artist (str): artist name
+        title (str): track title
+        album (str): album name
+        duration (str): track duration in seconds
 
-    Returns:
-        Standardized ProviderResponse structure:
-        {
-            'success': bool,              # Overall operation success
-            'error': Optional[str],       # Error category on failure
-            'message': Optional[str],     # Error details on failure
-            'provider': 'musixmatch'      # Provider identifier
-            'data': Optional[LyricData],  # Present on success
-        }
-
-        On success, data contains:
-        {
-            'format': 'json',     # Format of lyric data
-            'timing': str,        # 'Word' or 'Line' (synchronization level)
-            'instrumental': bool, # Whether track is instrumental
-            'lyric': str          # JSON string of lyric content
-        }
+    Returns: Standardized APIResponse structure with consistent fields (LyricData):
+        success (boolean): Indicating overall operation success
+        error (str): Error category (only when success=False)
+        message (str): Detailed error description (only when success=False)
+        data (LyricData): Lyric data dictionary (only when success=True)
 
     Example:
-        >>> from lrxy.providers import musixmatch_api
-        >>>
-        >>> # Get lyrics using track metadata
-        >>> result = musixmatch_api({
-        ...     "artist": "Radiohead",
-        ...     "title": "No Surprises",
-        ...     "album": "OK Computer",
-        ...     "duration": "216"
-        ... })
-        >>>
-        >>> if result['success']:
-        ...     print(f"Lyrics found with {result['data']['timing']} timing")
-        ...     # Access the structured lyric data
-        ...     lyric_data = json.loads(result['data']['lyric'])
-        ...     print(f"First line: {lyric_data['lyrics'][0]['content']}")
-        ... else:
-        ...     print(f"Error ({result['error']}): {result['message']}")
+        ```python
+        from lrxy.providers import musixmatch_api
+        
+        # Get lyrics using track metadata
+        result = musixmatch_api({
+            "artist": "Radiohead",
+            "title": "No Surprises",
+            "album": "OK Computer",
+            "duration": "216"
+        })
+        
+        if result['success']:
+            print(f"Lyrics found with {result['data']['timing']} timing")
+            # Access the structured lyric data
+            lyric_data = json.loads(result['data']['lyric'])
+            print(f"First line: {lyric_data['lyrics'][0]['content']}")
+        else:
+            print(f"Error ({result['error']}): {result['message']}")
+        ```
     """
     result: ProviderResponse = {
         "success": False,
