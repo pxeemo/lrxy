@@ -1,10 +1,28 @@
+"""Apple Music API client for fetching richly formatted TTML lyrics.
+
+Provides access to Apple Music's lyric database with support for standard
+line-synchronized and word-synchronized (karaoke) lyrics. Processes API
+responses into a standardized format compatible with lrxy's lyric embedding
+system.
+
+The API requires these metadata fields for successful lookup:
+- artist: Primary artist name
+- title: Track title
+- album: Album title
+- duration: Track duration in seconds (as string)
+
+Note: Apple Music offers richer timing information, including word-level
+synchronization when available. This provider preserves that detailed timing
+data in a structured format.
+"""
+
 import os
 import json
 import logging
 
 import requests
 
-from .utils import ProviderResponse, LyricData
+from .utils import MetadataParams, ProviderResponse, LyricData
 
 API = "https://api.paxsenix.dpdns.org/"
 SEARCH_API = f"{API}/apple-music/search"
@@ -17,7 +35,46 @@ HEADERS = {
 logger = logging.getLogger(__name__)
 
 
-def applemusic_api(params: dict) -> ProviderResponse:
+def applemusic_api(params: MetadataParams) -> ProviderResponse:
+    """Fetch lyrics from Apple Music API using track metadata.
+
+    Makes a GET request to the Apple Music API with provided track
+    information and processes the response into lrxy's standardized
+    format with detailed timing information when available.
+
+    Args: params (MetadataParams): Dictionary containing track metadata with keys:
+        artist (str): artist name
+        title (str): track title
+        album (str): album name
+        duration (str): track duration in seconds
+
+    Returns: Standardized APIResponse structure with consistent fields (LyricData):
+        success (boolean): Indicating overall operation success
+        error (str): Error category (only when success=False)
+        message (str): Detailed error description (only when success=False)
+        data (LyricData): Lyric data dictionary (only when success=True)
+
+    Example:
+        ```python
+        from lrxy.providers import musixmatch_api
+        
+        # Get lyrics using track metadata
+        result = musixmatch_api({
+            "artist": "Radiohead",
+            "title": "No Surprises",
+            "album": "OK Computer",
+            "duration": "216"
+        })
+        
+        if result['success']:
+            print(f"Lyrics found with {result['data']['timing']} timing")
+            # Access the structured lyric data
+            lyric_data = json.loads(result['data']['lyric'])
+            print(f"First line: {lyric_data['lyrics'][0]['content']}")
+        else:
+            print(f"Error ({result['error']}): {result['message']}")
+        ```
+    """
     result: ProviderResponse = {
         'success': False,
         'error': None,
