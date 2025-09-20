@@ -1,83 +1,82 @@
-import json
 import re
 
 from lxml import etree
 
-from .utils import Data, Line, Word, deformatTime, formatLrcTime
+from .utils import Data, Line, Word, deformat_time, format_time
 
 
-def parseTtmlWbwLine(lineTag, ns):
+def parse_wbw_line(line_tag, ns):
     line: Line = {
-        'begin': deformatTime(lineTag.get('begin')),
-        'end': deformatTime(lineTag.get('end')),
-        'agent': lineTag.get(f'{{{ns["ttm"]}}}agent'),
-        'background': lineTag.get(f'{{{ns["ttm"]}}}role') == 'x-bg',
+        'begin': deformat_time(line_tag.get('begin')),
+        'end': deformat_time(line_tag.get('end')),
+        'agent': line_tag.get(f'{{{ns["ttm"]}}}agent'),
+        'background': line_tag.get(f'{{{ns["ttm"]}}}role') == 'x-bg',
         'content': []
     }
-    inlineBgLines = []
-    wordTags = lineTag.getchildren()
+    inline_bg_lines = []
+    word_tags = line_tag.getchildren()
 
     # if not line['agent']:
     #     line['agent'] = lines[-1]['agent']
 
-    for wordTag in wordTags:
-        if wordTag.get(f'{{{ns["ttm"]}}}role') == 'x-bg':
-            bgLine, _ = parseTtmlWbwLine(wordTag, ns)
-            inlineBgLines.append(bgLine)
+    for word_tag in word_tags:
+        if word_tag.get(f'{{{ns["ttm"]}}}role') == 'x-bg':
+            bg_line, _ = parse_wbw_line(word_tag, ns)
+            inline_bg_lines.append(bg_line)
         else:
-            wordBegin = deformatTime(wordTag.get('begin'))
-            if not line['begin'] and wordBegin:
-                line['begin'] = wordBegin
+            word_begin = deformat_time(word_tag.get('begin'))
+            if not line['begin'] and word_begin:
+                line['begin'] = word_begin
             word: Word = {
-                'begin': wordBegin,
-                'end': deformatTime(wordTag.get('end')),
-                'part': not wordTag.tail or ' ' not in wordTag.tail,
-                'text': wordTag.text
+                'begin': word_begin,
+                'end': deformat_time(word_tag.get('end')),
+                'part': not word_tag.tail or ' ' not in word_tag.tail,
+                'text': word_tag.text
             }
             line['content'].append(word)
 
     if not line['end']:
-        lastWordEnd = line['content'][-1]['end']
-        if lastWordEnd:
-            line['end'] = lastWordEnd
+        last_word_end = line['content'][-1]['end']
+        if last_word_end:
+            line['end'] = last_word_end
 
-    return line, inlineBgLines
+    return line, inline_bg_lines
 
 
-def parseTtmlLine(lineTag, ns):
+def parse_line(line_tag, ns):
     line: Line = {
-        'begin': deformatTime(lineTag.get('begin')),
-        'end': deformatTime(lineTag.get('end')),
-        'agent': lineTag.get(f'{{{ns["ttm"]}}}agent'),
-        'background': lineTag.get(f'{{{ns["ttm"]}}}role') == 'x-bg',
-        'content': lineTag.text,
+        'begin': deformat_time(line_tag.get('begin')),
+        'end': deformat_time(line_tag.get('end')),
+        'agent': line_tag.get(f'{{{ns["ttm"]}}}agent'),
+        'background': line_tag.get(f'{{{ns["ttm"]}}}role') == 'x-bg',
+        'content': line_tag.text,
     }
     return line
 
 
-def parse(input: str):
+def parse(input_data: str):
     ns = {
         'xmlns': 'http://www.w3.org/ns/ttml',
         'itunes': 'http://music.apple.com/lyric-ttml-internal',
         'ttm': 'http://www.w3.org/ns/ttml#metadata',
     }
 
-    content = re.sub(r'&(?!#?[a-zA-Z0-9]+;)', '&amp;', input).encode()
+    content = re.sub(r'&(?!#?[a-zA-Z0-9]+;)', '&amp;', input_data).encode()
 
     parser = etree.XMLParser(recover=True)
-    tree = etree.fromstring(content)
+    tree = etree.fromstring(content, parser=parser)
     timing = tree.get(f'{{{ns["itunes"]}}}timing')
     ps = tree.xpath("//xmlns:p", namespaces=ns)
     lines = []
 
     if timing == 'Word':
         for p in ps:
-            line, inlineBgLines = parseTtmlWbwLine(p, ns)
+            line, inline_bg_lines = parse_wbw_line(p, ns)
             lines.append(line)
-            lines.extend(inlineBgLines)
+            lines.extend(inline_bg_lines)
     elif timing == "Line":
         for p in ps:
-            line = parseTtmlLine(p, ns)
+            line = parse_line(p, ns)
             lines.append(line)
     elif timing == 'None':
         for p in ps:
@@ -113,7 +112,7 @@ def generate(data: Data):
     head = etree.SubElement(tt, 'head')
     metadata = etree.SubElement(head, 'metadata')
     body = etree.SubElement(tt, 'body', attrib={
-        # 'dur': formatLrcTime(
+        # 'dur': format_time(
         #     data['lyrics'][-1]['end'] - data['lyrics'][0]['begin'])
     })
     div = etree.SubElement(body, 'div')
@@ -126,8 +125,8 @@ def generate(data: Data):
             continue
 
         p = etree.SubElement(div, 'p', attrib={
-            'begin': formatLrcTime(line['begin']),
-            'end': formatLrcTime(line['end']),
+            'begin': format_time(line['begin']),
+            'end': format_time(line['end']),
         })
         if line['background']:
             p.set(f'{{{ns['ttm']}}}role', 'x-bg')
@@ -140,23 +139,23 @@ def generate(data: Data):
         elif data['timing'] == 'Word':
             for word in line['content']:
                 span = etree.SubElement(p, 'span', attrib={
-                    'begin': formatLrcTime(word['begin']),
-                    'end': formatLrcTime(word['end']),
+                    'begin': format_time(word['begin']),
+                    'end': format_time(word['end']),
                 })
                 span.text = word['text']
                 if not word['part']:
                     span.tail = " "
 
     for agent in sorted(agents, key=lambda s: int(s.removeprefix('v'))):
-        agentTag = etree.SubElement(
+        agent_tag = etree.SubElement(
             metadata,
             f'{{{ns['ttm']}}}agent',
             attrib={f'{{{ns['xml']}}}id': agent},
         )
-        agentType = 'group'
+        agent_type = 'group'
         if agent in ['v1', 'v2']:
-            agentType = 'person'
-        agentTag.set('type', agentType)
+            agent_type = 'person'
+        agent_tag.set('type', agent_type)
 
     return etree.tostring(
         tt,

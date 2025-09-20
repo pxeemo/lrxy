@@ -1,3 +1,5 @@
+"""Custom typed dictionaries and API utilities used for providers"""
+
 from typing import TypedDict, Literal
 
 

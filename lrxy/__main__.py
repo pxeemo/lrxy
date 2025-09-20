@@ -15,9 +15,7 @@ def get_version():
     return version("lrxy")
 
 
-def main():
-    logger = logging.getLogger()
-
+def get_parser():
     parser = argparse.ArgumentParser(
         prog="lrxy",
         description="A synced lyric fetcher and embedder for music files",
@@ -86,6 +84,12 @@ def main():
         help="path of music file to process",
     )
 
+    return parser
+
+
+def main():
+    logger = logging.getLogger()
+    parser = get_parser()
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
     fetch = not args.embed
@@ -108,43 +112,45 @@ def main():
     for result in iter_files(*args.files, fetch=fetch, provider=provider):
         logger.debug("File data: %s\n", result)
         audio = result["music_obj"]
-        if args.embed:
+        lyric_data = result["data"]
+        output_format = args.format or "lrc"
+
+        if args.embed:  # embed from file
             audio.embed_from_file(args.embed)
             logger.info("Successfully embedded lyric from file: %s", audio)
-        elif result['success']:
-            lyric_data = result["data"]
+            continue
 
-            if not lyric_data["hasLyric"]:
-                logger.error("%s: Song has no synced lyric.", audio)
-                continue
-
-            if not args.format and lyric_data["format"] != "json":
-                lyric = lyric_data["lyric"]
-            else:
-                lyric = convert(
-                    from_format=lyric_data["format"],
-                    to_format=args.format or "lrc",
-                    input=lyric_data["lyric"],
-                )
-
-            if args.no_embed:
-                file = audio.path.with_suffix(f".{args.format}")
-                if file.exists() and not args.overwrite:
-                    logger.error("%s: File already exists.", file)
-                else:
-                    with open(file, "w", encoding="utf-8") as f:
-                        f.write(lyric)
-
-                    logger.info("Successfully written to: %s", file)
-            else:
-                if audio.has_lyric and not args.overwrite:
-                    logger.error("%s: Audio file already has embedded lyric.", audio)
-                else:
-                    audio.embed_lyric(lyric)
-                    logger.info("Successfully embedded the lyric: %s", audio)
-
-        else:
+        if not result['success']:
             logger.error("%s: %s", result['path'], result['error_message'])
+            continue
+
+        if not lyric_data["hasLyric"]:
+            logger.error("%s: Song has no synced lyric.", audio)
+            continue
+
+        if not args.format and lyric_data["format"] != "json":
+            lyric = lyric_data["lyric"]
+        else:
+            lyric = convert(
+                from_format=lyric_data["format"],
+                to_format=output_format,
+                input_content=lyric_data["lyric"],
+            )
+
+        if args.no_embed:
+            file = audio.path.with_suffix(f".{output_format}")
+            if file.exists() and not args.overwrite:
+                logger.error("%s: File already exists.", file)
+            else:
+                with open(file, "w", encoding="utf-8") as f:
+                    f.write(lyric)
+                logger.info("Successfully written to: %s", file)
+        else:
+            if audio.has_lyric and not args.overwrite:
+                logger.error("%s: Audio file already has embedded lyric.", audio)
+            else:
+                audio.embed_lyric(lyric)
+                logger.info("Successfully embedded the lyric: %s", audio)
 
 
 if __name__ == "__main__":

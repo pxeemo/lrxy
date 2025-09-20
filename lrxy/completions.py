@@ -8,16 +8,18 @@ complete -c lrxy -s h -l help -d "show help"
 complete -c lrxy -s v -l version -d "show version"
 complete -c lrxy -l no-overwrite -d "do not overwrite existing lyrics"
 complete -c lrxy -s n -l no-embed -d "write lyrics to separate text files"
-complete -c lrxy -s p -l provider -fra "lrclib musixmatch applemusic" -d "provider to fetch lyrics"
-complete -c lrxy -s f -l format -fra "ttml lrc srt json" -d "output lyrics format"
+complete -c lrxy -s p -l provider -xa "lrclib musixmatch applemusic" -d "provider to fetch lyrics"
+complete -c lrxy -s f -l format -xa "ttml lrc srt json" -d "output lyrics format"
 complete -c lrxy -l embed -a "(__fish_complete_path)" -d "embed existing lyric file into music"
-complete -c lrxy -l log-level -fra "error warning info debug" -d "command line verbosity\""""
+complete -c lrxy -l log-level -xa "error warning info debug" -d "command line verbosity"
+"""
 
 _lrxy_convert_fish_completion = """# generated with `lrxy-convert --shell-completion fish`
 complete -c lrxy-convert -s h -l help -d "show help"
-complete -c lrxy-convert -s i -l input-format -fra "ttml lrc srt json" -d "input lyric file format"
-complete -c lrxy-convert -s o -l output-format -fra "ttml lrc srt json" -d "output lyric file format"
-complete -c lrxy-convert -l log-level -fra "error warning info debug" -d "provide shell completion\""""
+complete -c lrxy-convert -s i -l input-format -xa "ttml lrc srt json" -d "input lyric file format"
+complete -c lrxy-convert -s o -l output-format -xa "ttml lrc srt json" -d "output lyric file format"
+complete -c lrxy-convert -l log-level -xa "error warning info debug" -d "provide shell completion"
+"""
 
 
 def generate_completion(shell):

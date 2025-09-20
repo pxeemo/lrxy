@@ -6,17 +6,17 @@ and enforces required metadata validation.
 """
 
 from mutagen import FileType
-from .filetype import AudioType
+from .filetype import LrxyAudio
 
 
-class LrxyMP4(AudioType):
+class LrxyMP4(LrxyAudio):
     """MP4 tag handler for lyric embedding operations.
 
     Specializes in managing lyrics for MP4-based audio formats (M4A, MP4, etc.).
     Uses Apple's standard metadata fields and ensures required metadata exists
     before lyric operations.
 
-    Inherits from AudioType to enforce required metadata fields using
+    Inherits from LrxyAudio to enforce required metadata fields using
     MP4-specific atom names (©ART, ©nam, ©alb).
 
     Args:
@@ -58,9 +58,11 @@ class LrxyMP4(AudioType):
             lyric: Lyrics text to embed
 
         Example:
+            ```python
             >>> from lrxy.utils import load_audio
             >>> audio = load_audio("song.m4a")
             >>> audio.embed_lyric("Verse 1\\nThis is a line\\n\\nChorus\\n...")
+            ```
         """
 
         self.audio.tags["©lyr"] = lyric

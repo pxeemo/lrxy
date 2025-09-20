@@ -1,7 +1,7 @@
 import re
 
 from lrxy.exceptions import ParseLyricError
-from .utils import Data, Line, Word, deformatTime, formatLrcTime
+from .utils import Data, Line, deformat_time, format_time
 
 TIMESTAMP_PATTERN = r'\d{2}(?::\d{2})+,\d+'
 TIMESTAMP_LINE_PATTERN = fr'({TIMESTAMP_PATTERN}) --> ({TIMESTAMP_PATTERN})'
@@ -13,9 +13,9 @@ def generate(data: Data) -> str:
     for index, line in enumerate(data['lyrics']):
         content += f'{index + 1}\n'
 
-        content += formatLrcTime(line['begin'], srt=True)
+        content += format_time(line['begin'], srt=True)
         content += ' --> '
-        content += formatLrcTime(line['end'], srt=True)
+        content += format_time(line['end'], srt=True)
 
         if data['timing'] == 'Line':
             content += f'\n{line['content']}\n\n'
@@ -33,19 +33,19 @@ def generate(data: Data) -> str:
 def parse(content: str) -> Data:
     blocks = content.split("\n\n")
     lines: list[Line] = []
-    lastKey = 0
+    last_line_number = 0
     for block in blocks:
         match = re.match(BLOCK_PATTERN, block)
         if not match:
             raise ParseLyricError('srt')
 
-        key = int(match.group(1))
-        if key != lastKey + 1:
+        line_number = int(match.group(1))
+        if line_number != last_line_number + 1:
             raise ParseLyricError('srt')
-        lastKey = key
+        last_line_number = line_number
         line: Line = {
-            'begin': deformatTime(match.group(2), srt=True),
-            'end': deformatTime(match.group(3), srt=True),
+            'begin': deformat_time(match.group(2), srt=True),
+            'end': deformat_time(match.group(3), srt=True),
             'agent': None,
             'background': False,
             'content': match.group(4),

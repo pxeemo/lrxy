@@ -49,15 +49,15 @@ def applemusic_api(params: MetadataParams) -> ProviderResponse:
         duration (str): track duration in seconds
 
     Returns: Standardized APIResponse structure with consistent fields (LyricData):
-        success (boolean): Indicating overall operation success
-        error (str): Error category (only when success=False)
-        message (str): Detailed error description (only when success=False)
-        data (LyricData): Lyric data dictionary (only when success=True)
+        success (bool): Indicating overall operation success
+        error (str | None): Error category (only when success=False)
+        message (str | None): Detailed error description (only when success=False)
+        data (LyricData | None): Lyric data dictionary (only when success=True)
 
     Example:
         ```python
         from lrxy.providers import musixmatch_api
-        
+
         # Get lyrics using track metadata
         result = musixmatch_api({
             "artist": "Radiohead",
@@ -65,7 +65,7 @@ def applemusic_api(params: MetadataParams) -> ProviderResponse:
             "album": "OK Computer",
             "duration": "216"
         })
-        
+
         if result['success']:
             print(f"Lyrics found with {result['data']['timing']} timing")
             # Access the structured lyric data
@@ -85,7 +85,7 @@ def applemusic_api(params: MetadataParams) -> ProviderResponse:
     if API_TOKEN:
         logger.debug("Using api token $PAXSENIX_API_TOKEN")
     else:
-        logger.warn("API token $PAXSENIX_API_TOKEN not found")
+        logger.warning("API token $PAXSENIX_API_TOKEN not found")
 
     try:
         response = requests.get(

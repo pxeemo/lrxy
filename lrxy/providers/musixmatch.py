@@ -45,32 +45,36 @@ def richsync_parse(richsync) -> list:
     Args:
         richsync: Raw richsync data from Musixmatch API response
 
-    Returns:
-        List of line objects with structure:
-        [
-            {
-                'begin': int,       # Start time in milliseconds
-                'end': int,         # End time in milliseconds
-                'background': bool, # Whether line is background vocal
-                'agent': None,      # Vocalist (e.g.: "v1")
-                'content': [        # Words in this line
-                    {
-                        'begin': int,
-                        'end': int,
-                        'part': str,  # Whether word or syllable
-                        'text': str   # Word text
-                    },
-                    # ...more words
-                ]
-            },
-            # ...more lines
-        ]
+    Returns: List of line objects with structure:
+
+            ```
+            [
+                {
+                    'begin': int,       # Start time in milliseconds
+                    'end': int,         # End time in milliseconds
+                    'background': bool, # Whether line is background vocal
+                    'agent': None,      # Vocalist (e.g.: "v1")
+                    'content': [        # Words in this line
+                        {
+                            'begin': int,
+                            'end': int,
+                            'part': str,  # Whether word or syllable
+                            'text': str   # Word text
+                        },
+                        # ...more words
+                    ]
+                },
+                # ...more lines
+            ]
+            ```
 
     Example:
+        ```python
         >>> rich_data = [{"timestamp": "0", "endtime": "5000", "text": [...]}]
         >>> parsed = richsync_parse(rich_data)
         >>> print(parsed[0]['content'][0]['text'])
         "Verse"
+        ```
     """
     lines = []
     for richline in richsync:
@@ -104,27 +108,28 @@ def lyric_parse(data) -> list:
     Args:
          Raw lyrics data from Musixmatch API response
 
-    Returns:
-        List of line objects with structure:
-        [
-            {
-                'begin': int,       # Start time in milliseconds
-                'end': int,         # End time in milliseconds
-                'background': bool, # Whether line is background vocal
-                'agent': None,      # Vocalist (e.g.: "v1")
-                'content': str      # Full line text
-            },
-            # ...more lines
-        ]
+    Returns: List of line objects with structure:
 
-    Note:
-        The last line's end time is set to None as it continues to track end
+            > ```python
+            > [
+            >     {
+            >         'begin': int,         # Start time in milliseconds
+            >         'end': int,           # End time in milliseconds
+            >         'background': bool,   # Whether line is background vocal
+            >         'agent': None,        # Vocalist (e.g.: "v1")
+            >         'content': str | list # Line content
+            >     },
+            >     # ...more lines
+            > ]
+            > ```
 
     Example:
+        ```python
         >>> lyric_data = [{"time": {"total": 0}, "text": "Line 1"}]
         >>> parsed = lyric_parse(lyric_data)
         >>> print(parsed[0]['content'])
         "Line 1"
+        ```
     """
     lines = []
     for lyricline in data:
@@ -157,15 +162,15 @@ def musixmatch_api(params: MetadataParams) -> ProviderResponse:
         duration (str): track duration in seconds
 
     Returns: Standardized APIResponse structure with consistent fields (LyricData):
-        success (boolean): Indicating overall operation success
-        error (str): Error category (only when success=False)
-        message (str): Detailed error description (only when success=False)
-        data (LyricData): Lyric data dictionary (only when success=True)
+        success (bool): Indicating overall operation success
+        error (str | None): Error category (only when success=False)
+        message (str | None): Detailed error description (only when success=False)
+        data (LyricData | None): Lyric data dictionary (only when success=True)
 
     Example:
         ```python
         from lrxy.providers import musixmatch_api
-        
+
         # Get lyrics using track metadata
         result = musixmatch_api({
             "artist": "Radiohead",
@@ -173,7 +178,7 @@ def musixmatch_api(params: MetadataParams) -> ProviderResponse:
             "album": "OK Computer",
             "duration": "216"
         })
-        
+
         if result['success']:
             print(f"Lyrics found with {result['data']['timing']} timing")
             # Access the structured lyric data
@@ -192,30 +197,31 @@ def musixmatch_api(params: MetadataParams) -> ProviderResponse:
     if API_TOKEN:
         logger.debug("Using api token $PAXSENIX_API_TOKEN")
     else:
-        logger.warn("API token $PAXSENIX_API_TOKEN not found")
+        logger.warning("API token $PAXSENIX_API_TOKEN not found")
 
     try:
         response = requests.get(API, params=params, timeout=10.0)
         response.raise_for_status()
         data = response.json()
         logger.debug("API response: %s\n", json.dumps(data))
-        if data["track"]["has_lyrics"]:
+        has_lyric = data["track"]["has_lyrics"]
+        if has_lyric:
             # if data["track"]["has_richsync"]:
             #     timing = "Word"
             #     lines = richsync_parse(data["richsync"])
             timing = "Line"
             lines = lyric_parse(data["lyrics"])
+            lyric_content = {
+                "timing": timing,
+                "lyrics": lines,
+            }
 
-        lyric_content = {
-            "timing": timing,
-            "lyrics": lines,
-        }
         lyric_data: LyricData = {
             "format": "json",
             "timing": timing,
             "instrumental": data["track"]["instrumental"],
-            "hasLyric": data["track"]["has_lyrics"],
-            "lyric": json.dumps(lyric_content),
+            "hasLyric": has_lyric,
+            "lyric": json.dumps(lyric_content) if has_lyric else None,
         }
 
         result["success"] = True

@@ -6,17 +6,17 @@ and provides simple lyric embedding through the 'lyrics' field.
 """
 
 from mutagen import FileType
-from .filetype import AudioType
+from .filetype import LrxyAudio
 
 
-class LrxyVorbis(AudioType):
+class LrxyVorbis(LrxyAudio):
     """Vorbis comment handler for lyric embedding operations.
 
     Specializes in managing lyrics for audio formats using Vorbis comments
     (Ogg, FLAC, etc.). Uses the standard 'lyrics' field for storage and
     ensures required metadata fields exist before operations.
 
-    Inherits from AudioType to enforce required metadata fields
+    Inherits from LrxyAudio to enforce required metadata fields
     (artist, title, album) using Vorbis comment field names.
 
     Args:
@@ -57,9 +57,11 @@ class LrxyVorbis(AudioType):
             lyric: Lyrics text to embed
 
         Example:
+            ```python
             >>> from lrxy.utils import load_audio
             >>> audio = load_audio("song.flac")
             >>> audio.embed_lyric("Verse 1\\nThis is a line\\n\\nChorus\\n...")
+            ```
         """
 
         self.audio.tags["lyrics"] = lyric

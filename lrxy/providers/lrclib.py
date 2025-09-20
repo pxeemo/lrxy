@@ -41,22 +41,22 @@ def lrclib_api(params: MetadataParams) -> ProviderResponse:
         duration (str): track duration in seconds
 
     Returns: Standardized APIResponse structure with consistent fields (LyricData):
-        success (boolean): Indicating overall operation success
-        error (str): Error category (only when success=False)
-        message (str): Detailed error description (only when success=False)
-        data (LyricData): Lyric data dictionary (only when success=True)
+        success (bool): Indicating overall operation success
+        error (str | None): Error category (only when success=False)
+        message (str | None): Detailed error description (only when success=False)
+        data (LyricData | None): Lyric data dictionary (only when success=True)
 
     Example:
         ```python
         from lrxy.providers import lrclib_api
-        
+
         result = lrclib_api({
             "artist": "Radiohead",
             "title": "No Surprises",
             "album": "OK Computer",
             "duration": "216"
         })
-        
+
         if result['success']:
             print(f"Lyrics found.")
             audio.embed_lyric(result['data']['lyric'])

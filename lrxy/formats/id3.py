@@ -8,17 +8,17 @@ formatting for maximum compatibility with media players.
 
 from mutagen.id3 import USLT
 from mutagen import FileType
-from .filetype import AudioType
+from .filetype import LrxyAudio
 
 
-class LrxyID3(AudioType):
+class LrxyID3(LrxyAudio):
     """ID3 tag handler for lyric embedding operations.
 
     Specializes in managing unsynchronized lyrics (USLT) in audio files
     using ID3v2.3 tags. Handles automatic tag version conversion and
     cleanup of existing lyric tags before embedding new content.
 
-    Inherits from AudioType to enforce required metadata fields
+    Inherits from LrxyAudio to enforce required metadata fields
     (artist, title, album) while adding lyric-specific functionality.
 
     Args:
@@ -42,7 +42,8 @@ class LrxyID3(AudioType):
             "album": "TALB",
         })
 
-        self.has_lyric = any([audio.tags.getall(tag) for tag in ['USLT', 'SYLT']])
+        self.has_lyric = any((audio.tags.getall(tag)
+                             for tag in ['USLT', 'SYLT']))
 
     def embed_lyric(self, lyric: str) -> None:
         """Embed lyrics into the audio file's ID3 tags.
@@ -62,12 +63,14 @@ class LrxyID3(AudioType):
             lyric: Lyrics text to embed
 
         Example:
+            ```python
             >>> from lrxy.utils import load_audio
             >>> audio = load_audio("song.mp3")
             >>> audio.embed_lyric("Verse 1\\nThis is a line\\n\\nChorus\\n...")
+            ```
         """
 
-        lyric_tag = USLT(encoding=3, desc='', text=lyric)
+        lyric_tag = USLT(encoding=3, desc='Embedded with lrxy', text=lyric)
         audio = self.audio
         audio.tags.update_to_v23()
         audio.tags.delall('USLT')

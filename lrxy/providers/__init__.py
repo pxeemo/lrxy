@@ -1,3 +1,6 @@
+"""Lyrics provider modules to fetch and return with a consistant response
+structure"""
+
 from .lrclib import lrclib_api
 from .musixmatch import musixmatch_api
 from .applemusic import applemusic_api

@@ -15,10 +15,17 @@ from lrxy import completions
 
 SUPPORTED_INPUTS = ["ttml", "lrc", "srt", "json"]
 SUPPORTED_OUTPUTS = ["ttml", "lrc", "srt", "json"]
+EXTENSIONS_FORMAT = {
+    ".lrc": "lrc",
+    ".ttml": "ttml",
+    ".srt": "srt",
+    ".json": "json",
+}
+
 logger = logging.getLogger(__name__)
 
 
-def main():
+def get_parser():
     parser = argparse.ArgumentParser(
         prog='lrxy-convert',
         description='A tool from lrxy to convert lyric formats'
@@ -39,7 +46,6 @@ def main():
     parser.add_argument(
         '-i', '--input-format',
         choices=SUPPORTED_INPUTS,
-        nargs=1,
         default=None,
         help='input lyric file format'
     )
@@ -47,14 +53,12 @@ def main():
     parser.add_argument(
         '-o', '--output-format',
         choices=SUPPORTED_OUTPUTS,
-        nargs=1,
         default=None,
         help='output lyric file format'
     )
 
     parser.add_argument(
         "--shell-completion",
-        nargs=1,
         choices=["bash", "zsh", "fish"],
         type=completions.generate_completion,
         dest="completion",
@@ -64,102 +68,91 @@ def main():
     parser.add_argument(
         "--log-level",
         choices=["error", "warning", "info", "debug"],
-        nargs=1,
-        default=["info"],
+        default="info",
         help="command line verbosity",
     )
 
+    return parser
+
+
+def main():
+    parser = get_parser()
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
     logger.setLevel(getattr(logging, args.log_level[0].upper()))
     logger.debug("Parser args: %s", args)
 
-    input = sys.stdin if args.input == '-' else Path(args.input)
-    output = sys.stdout if args.output == '-' else Path(args.output)
+    input_file = sys.stdin if args.input == '-' else Path(args.input)
+    output_file = sys.stdout if args.output == '-' else Path(args.output)
 
     if args.input_format:
         input_format = args.input_format[0]
+    elif isinstance(input_file, Path):
+        input_format = EXTENSIONS_FORMAT.get(input_file.suffix)
+        if not input_format:
+            logger.error(
+                "%s: Input format '%s' is not supported.",
+                input_file,
+                input_file.suffix,
+            )
+            sys.exit(1)
     else:
-        if isinstance(input, Path):
-            match input.suffix:
-                case ".lrc":
-                    input_format = "lrc"
-                case ".ttml":
-                    input_format = "ttml"
-                case ".srt":
-                    input_format = "srt"
-                case ".json":
-                    input_format = "json"
-                case _:
-                    logger.error(
-                        "%s: Input format '%s' is not supported.",
-                        input,
-                        input.suffix,
-                    )
-        else:
-            parser.error("Can't read from stdin"
-                         "without specifying '-i/--input-format'")
+        parser.error("Can't read from stdin"
+                     "without specifying '-i/--input-format'")
+        sys.exit(1)
 
     if args.output_format:
-        output_format = args.output_format[0]
+        output_format = args.output_format
+    elif isinstance(output_file, Path):
+        output_format = EXTENSIONS_FORMAT.get(output_file.suffix)
+        if not output_format:
+            logger.error(
+                "%s: Output format '%s' is not supported.",
+                output_file,
+                output_file.suffix,
+            )
+            sys.exit(1)
     else:
-        if isinstance(output, Path):
-            match output.suffix:
-                case ".lrc":
-                    output_format = "lrc"
-                case ".ttml":
-                    output_format = "ttml"
-                case ".srt":
-                    output_format = "srt"
-                case ".json":
-                    output_format = "json"
-                case _:
-                    logger.error(
-                        "%s: Output format '%s' is not supported.",
-                        output,
-                        output.suffix,
-                    )
-        else:
-            output_format = "json"
+        output_format = "json"
 
-    if isinstance(input, Path):
-        with open(input, "r", encoding="utf-8") as f:
+    if isinstance(input_file, Path):
+        with open(input_file, "r", encoding="utf-8") as f:
             input_content = f.read()
     else:
-        input_content = input.read()
+        input_content = input_file.read()
     logger.debug("Input content: %s\n", input_content)
 
     result = convert(
         from_format=input_format,
         to_format=output_format,
-        input=input_content,
+        input_content=input_content,
     )
 
-    if isinstance(output, Path):
-        with open(output, "w", encoding="utf-8") as f:
+    if isinstance(output_file, Path):
+        with open(output_file, "w", encoding="utf-8") as f:
             f.write(result)
     else:
-        output.write(result)
+        output_file.write(result)
 
 
 def convert(
     from_format: Literal[*SUPPORTED_INPUTS],
     to_format: Literal[*SUPPORTED_OUTPUTS],
-    input: str,
+    input_content: str,
 ) -> str:
     if from_format == to_format:
-        return input
+        return input_content
 
     logger.debug("Converting from %s to %s", from_format, to_format)
     match from_format:
         case "lrc":
-            data = lrc.parse(input)
+            data = lrc.parse(input_content)
         case "ttml":
-            data = ttml.parse(input)
+            data = ttml.parse(input_content)
         case "srt":
-            data = srt.parse(input)
+            data = srt.parse(input_content)
         case "json":
-            data = json.loads(input)
+            data = json.loads(input_content)
         case _:
             raise UnsupportedFileFormatError()
     logger.debug("Parsed data: %s\n", data)

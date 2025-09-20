@@ -1,9 +1,8 @@
 from typing import List, Tuple
-import json
 import re
 
 from lrxy.exceptions import ParseLyricError
-from .utils import Data, Line, Word, deformatTime, formatLrcTime
+from .utils import Data, Line, Word, deformat_time, format_time
 
 
 TIMESTAMP_PATTERN = r'(\d{2}(?::\d{2})+\.(?:\d+))'
@@ -13,159 +12,166 @@ WORD_PATTERN = rf'<{TIMESTAMP_PATTERN}>([^<]*)'
 BG_PATTERN = r' ?\[bg:(.*?)\]'
 
 
-def parseLrcLine(
-    lineContent: str,
+def parse_line(
+    content: str,
     agent: str | None = None,
-    beginTime: int | None = None,
+    begin_time: int | None = None,
     background: bool = False
 ) -> Tuple[Line, List[Line]]:
     line: Line = {
-        'begin': beginTime,
+        'begin': begin_time,
         'end': None,
         'agent': agent,
         'background': background,
         'content': [],
     }
 
-    bgLines: list[Line] = []
-    for bgLine in re.finditer(BG_PATTERN, lineContent):
-        bgLineData, _ = parseLrcLine(bgLine.group(1), background=True)
-        bgLines.append(bgLineData)
-        # lineContent = (lineContent[bgLine.span()[0]:] +
-        #                lineContent[:bgLine.span()[1]])
-        lineContent = ''.join(lineContent.split(bgLine.group(0)))
+    bg_lines: list[Line] = []
+    for bg_line in re.finditer(BG_PATTERN, content):
+        bg_line_data, _ = parse_line(bg_line.group(1), background=True)
+        bg_lines.append(bg_line_data)
+        # content = (content[bg_line.span()[0]:] +
+        #                content[:bg_line.span()[1]])
+        content = ''.join(content.split(bg_line.group(0)))
 
     time = 0
-    for wordMatch in re.finditer(WORD_PATTERN, lineContent):
-        time = deformatTime(wordMatch.group(1))
+    for word_match in re.finditer(WORD_PATTERN, content):
+        time = deformat_time(word_match.group(1))
         if line['content']:
             if not line['content'][-1]['end']:
                 line['content'][-1]['end'] = time
         elif not line['begin']:
             line['begin'] = time
 
-        wordText = wordMatch.group(2)
-        if not wordText:
+        word_text = word_match.group(2)
+        if not word_text:
             continue
 
-        wordData: Word = {
-            'begin': deformatTime(wordMatch.group(1)),
+        word: Word = {
+            'begin': deformat_time(word_match.group(1)),
             'end': None,
-            'part': not wordText.endswith(' '),
-            'text': wordText.removesuffix(' '),
+            'part': not word_text.endswith(' '),
+            'text': word_text.removesuffix(' '),
         }
-        line['content'].append(wordData)
+        line['content'].append(word)
 
     if not line['end'] and time:
         line['end'] = time
 
     # if it's not word by word
     if not line['content']:
-        line['content'] = lineContent
+        line['content'] = content
 
-    return line, bgLines
+    return line, bg_lines
+
+
+def generate_line(timing, line: Line) -> str:
+    if timing == 'Line':
+        return line['content']
+
+    content = ''
+    for word in line['content']:
+        word_begin = f'<{format_time(word["begin"])}>'
+        if not content.endswith(word_begin):
+            content += word_begin
+
+        content += word['text']
+        if not word['part'] and word != line['content'][-1]:
+            content += ' '
+
+        content += f'<{format_time(word["end"])}>'
+
+    line_end = f'<{format_time(line["end"])}>'
+    if not content.endswith(line_end):
+        content += line_end
+
+    return content
 
 
 def generate(data: Data) -> str:
-    lrcContent = ''
-    lastLineEnd = 0
+    content = ''
+    last_line_end = 0
+    timing = data['timing']
     for line in data['lyrics']:
-        if data['timing'] == 'None':
-            lrcContent += line['content'] + '\n'
+        if timing == 'None':
+            content += line['content'] + '\n'
             continue
 
         if not line['background']:
-            lrcContent += f'[{formatLrcTime(line["begin"])}]'
+            content += f'[{format_time(line["begin"])}]'
             if line['agent']:
-                lrcContent += line['agent'] + ':'
+                content += line['agent'] + ':'
         else:
-            lrcContent = lrcContent[:-1] + ' [bg:'
+            content = content[:-1] + ' [bg:'
 
-        if data['timing'] == 'Line':
-            lrcContent += line['content']
-        else:
-            for word in line['content']:
-                wordBegin = f'<{formatLrcTime(word["begin"])}>'
-                if not lrcContent.endswith(wordBegin):
-                    lrcContent += wordBegin
-
-                lrcContent += word['text']
-                if not word['part'] and word != line['content'][-1]:
-                    lrcContent += ' '
-
-                lrcContent += f'<{formatLrcTime(word["end"])}>'
-
-            lineEnd = f'<{formatLrcTime(line["end"])}>'
-            if not lrcContent.endswith(lineEnd):
-                lrcContent += lineEnd
+        content += generate_line(timing, line)
 
         if line['background']:
-            lrcContent += ']'
+            content += ']'
 
-        lrcContent += '\n'
+        content += '\n'
 
-        if data['timing'] == 'Line':
-            if lastLineEnd and lastLineEnd != line['begin']:
-                lrcContent += f'[{formatLrcTime(lastLineEnd)}]\n'
-        lastLineEnd = line['end']
+        if timing == 'Line':
+            if last_line_end and last_line_end != line['begin']:
+                content += f'[{format_time(last_line_end)}]\n'
+        last_line_end = line['end']
 
-    return lrcContent
+    return content
+
+
+def get_timing(line_content: str | list) -> str:
+    if isinstance(line_content, list):
+        return "Word"
+    if isinstance(line_content, str):
+        return "Line"
+    raise ParseLyricError('lrc')
 
 
 def parse(content: str) -> Data:
     timing = None
     lines: list[Line] = []
-    for lrcLine in content.splitlines():
-        if re.match(METADATA_LINE_PATTERN, lrcLine):
+    for lrc_line in content.splitlines():
+        if re.match(METADATA_LINE_PATTERN, lrc_line):
             continue
 
-        match = re.match(LINE_PATTERN, lrcLine)
+        match = re.match(LINE_PATTERN, lrc_line)
+        agent, line_content = match.group(3, 4)
         if not match.group(1):
-            if not lines or not lines[-1]['begin']:
-                line: Line = {
+            if not lines or not lines[-1]['begin']:  # data has no timing
+                if not timing:
+                    timing = 'None'
+                lines.append({
                     'begin': None,
                     'end': None,
                     'agent': None,
                     'background': None,
-                    'content': match.group(4),
-                }
-                if not timing:
-                    timing = 'None'
-                lines.append(line)
+                    'content': line_content,
+                })
+            elif lines:  # treat as multi-line lrc
+                lines[-1]['content'] += "\n" + line_content
             continue
-        elif timing == 'None':
-            raise ParseLyricError('lrc')
 
-        beginTime = deformatTime(match.group(2))
-        agent, lineContent = match.group(3, 4)
-        line, bgLines = parseLrcLine(
-            lineContent=lineContent,
+        begin_time = deformat_time(match.group(2))
+        line, bg_lines = parse_line(
+            content=line_content,
             agent=agent,
-            beginTime=beginTime,
+            begin_time=begin_time,
         )
 
         if lines and not lines[-1]['end']:
-            lines[-1]['end'] = line['begin']
+            lines[-1]['end'] = begin_time
 
-        if isinstance(line['content'], list):
-            if line['content']:
-                lines.append(line)
-            if not timing:
-                timing = 'Word'
-            elif timing != 'Word':
-                raise ParseLyricError('lrc')
-        elif isinstance(line['content'], str):
-            if line['content']:
-                lines.append(line)
-            if not timing:
-                timing = 'Line'
-            elif timing != 'Line':
-                raise ParseLyricError('lrc')
-        lines.extend(bgLines)
+        if line['content']:
+            lines.append(line)
+        lines.extend(bg_lines)
 
-    data: Data = {
+        new_timing = get_timing(line['content'])
+        if not timing:
+            timing = new_timing
+        elif timing != new_timing:
+            raise ParseLyricError('lrc')
+
+    return {
         'timing': timing,
         'lyrics': lines,
     }
-
-    return data
