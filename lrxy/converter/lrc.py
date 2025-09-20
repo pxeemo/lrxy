@@ -65,7 +65,7 @@ def parse_line(
     return line, bg_lines
 
 
-def generate_line(timing, line: Line) -> str:
+def generate_line_content(timing, line: Line) -> str:
     if timing == 'Line':
         return line['content']
 
@@ -88,6 +88,13 @@ def generate_line(timing, line: Line) -> str:
     return content
 
 
+def generate_line_timestamp(line: Line) -> str:
+    timestamp = f'[{format_time(line["begin"])}]'
+    if line['agent']:
+        timestamp += line['agent'] + ':'
+    return timestamp
+
+
 def generate(data: Data) -> str:
     content = ''
     last_line_end = 0
@@ -97,14 +104,12 @@ def generate(data: Data) -> str:
             content += line['content'] + '\n'
             continue
 
-        if not line['background']:
-            content += f'[{format_time(line["begin"])}]'
-            if line['agent']:
-                content += line['agent'] + ':'
-        else:
+        if line['background']:
             content = content[:-1] + ' [bg:'
+        else:
+            content += generate_line_timestamp(line)
 
-        content += generate_line(timing, line)
+        content += generate_line_content(timing, line)
 
         if line['background']:
             content += ']'
@@ -113,8 +118,11 @@ def generate(data: Data) -> str:
 
         if timing == 'Line':
             if last_line_end and last_line_end != line['begin']:
-                content += f'[{format_time(last_line_end)}]\n'
+                content += generate_line_timestamp(line) + "\n"
         last_line_end = line['end']
+
+    if timing == "Line":
+        content += generate_line_timestamp(line) + "\n"
 
     return content
 
@@ -147,7 +155,8 @@ def parse(content: str) -> Data:
                     'background': None,
                     'content': line_content,
                 })
-            elif lines:  # treat as multi-line lrc
+            elif line_content and lines and timing == "Line":
+                # treat as multi-line lrc
                 lines[-1]['content'] += "\n" + line_content
             continue
 

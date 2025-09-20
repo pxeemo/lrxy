@@ -63,8 +63,7 @@ def parse(input_data: str):
 
     content = re.sub(r'&(?!#?[a-zA-Z0-9]+;)', '&amp;', input_data).encode()
 
-    parser = etree.XMLParser(recover=True)
-    tree = etree.fromstring(content, parser=parser)
+    tree = etree.fromstring(content)
     timing = tree.get(f'{{{ns["itunes"]}}}timing')
     ps = tree.xpath("//xmlns:p", namespaces=ns)
     lines = []

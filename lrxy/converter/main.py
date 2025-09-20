@@ -15,12 +15,6 @@ from lrxy import completions
 
 SUPPORTED_INPUTS = ["ttml", "lrc", "srt", "json"]
 SUPPORTED_OUTPUTS = ["ttml", "lrc", "srt", "json"]
-EXTENSIONS_FORMAT = {
-    ".lrc": "lrc",
-    ".ttml": "ttml",
-    ".srt": "srt",
-    ".json": "json",
-}
 
 logger = logging.getLogger(__name__)
 
@@ -29,18 +23,6 @@ def get_parser():
     parser = argparse.ArgumentParser(
         prog='lrxy-convert',
         description='A tool from lrxy to convert lyric formats'
-    )
-
-    parser.add_argument(
-        'input',
-        metavar='INPUT',
-        help='path of the input file to convert from'
-    )
-
-    parser.add_argument(
-        'output',
-        metavar='OUTPUT',
-        help='path of the output file to convert to'
     )
 
     parser.add_argument(
@@ -72,6 +54,18 @@ def get_parser():
         help="command line verbosity",
     )
 
+    parser.add_argument(
+        'input',
+        metavar='INPUT',
+        help='path of the input file to convert from'
+    )
+
+    parser.add_argument(
+        'output',
+        metavar='OUTPUT',
+        help='path of the output file to convert to'
+    )
+
     return parser
 
 
@@ -79,17 +73,17 @@ def main():
     parser = get_parser()
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
-    logger.setLevel(getattr(logging, args.log_level[0].upper()))
+    logger.setLevel(getattr(logging, args.log_level.upper()))
     logger.debug("Parser args: %s", args)
 
     input_file = sys.stdin if args.input == '-' else Path(args.input)
     output_file = sys.stdout if args.output == '-' else Path(args.output)
 
     if args.input_format:
-        input_format = args.input_format[0]
+        input_format = args.input_format
     elif isinstance(input_file, Path):
-        input_format = EXTENSIONS_FORMAT.get(input_file.suffix)
-        if not input_format:
+        input_format = input_file.suffix[1:]
+        if input_format not in SUPPORTED_INPUTS:
             logger.error(
                 "%s: Input format '%s' is not supported.",
                 input_file,
@@ -104,8 +98,8 @@ def main():
     if args.output_format:
         output_format = args.output_format
     elif isinstance(output_file, Path):
-        output_format = EXTENSIONS_FORMAT.get(output_file.suffix)
-        if not output_format:
+        output_format = output_file.suffix[1:]
+        if output_format not in SUPPORTED_OUTPUTS:
             logger.error(
                 "%s: Output format '%s' is not supported.",
                 output_file,
