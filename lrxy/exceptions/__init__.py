@@ -40,5 +40,19 @@ class TagError(LrxyException):
 class ParseLyricError(LrxyException):
     """There was a problem with parsing"""
 
-    def __init__(self, in_format: str) -> None:
-        super().__init__(f"There was a problem parsing {in_format}")
+    def __init__(self, in_format: str, details: str | None = None) -> None:
+        message = f"There was a problem parsing {in_format}"
+        if details:
+            message += "\n" + details
+        super().__init__(message)
+
+
+class UnexpectedTimingError(ParseLyricError):
+    """Got an unexpected content timing during tha parse"""
+
+    def __init__(self, line_number: int, in_format: str):
+        super().__init__(
+            in_format,
+            "Got an unexpected content timing during tha parse"
+            f" in line: {line_number}"
+        )

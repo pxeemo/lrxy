@@ -9,7 +9,7 @@ import argparse
 import argcomplete
 
 from lrxy.converter import lrc, ttml, srt
-from lrxy.exceptions import UnsupportedFileFormatError
+from lrxy.exceptions import UnsupportedFileFormatError, ParseLyricError
 from lrxy import completions
 
 
@@ -116,11 +116,15 @@ def main():
         input_content = input_file.read()
     logger.debug("Input content: %s\n", input_content)
 
-    result = convert(
-        from_format=input_format,
-        to_format=output_format,
-        input_content=input_content,
-    )
+    try:
+        result = convert(
+            from_format=input_format,
+            to_format=output_format,
+            input_content=input_content,
+        )
+    except ParseLyricError as e:
+        logger.error(e)
+        sys.exit(1)
 
     if isinstance(output_file, Path):
         with open(output_file, "w", encoding="utf-8") as f:
