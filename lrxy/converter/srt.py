@@ -1,3 +1,4 @@
+import logging
 import re
 
 from lrxy.exceptions import ParseLyricError
@@ -6,6 +7,8 @@ from .utils import Data, Line, deformat_time, format_time
 TIMESTAMP_PATTERN = r'\d{2}(?::\d{2})+,\d+'
 TIMESTAMP_LINE_PATTERN = fr'({TIMESTAMP_PATTERN}) --> ({TIMESTAMP_PATTERN})'
 BLOCK_PATTERN = fr'^(\d+)\n{TIMESTAMP_LINE_PATTERN}\n(.+)'
+
+logger = logging.getLogger(__name__)
 
 
 def generate(data: Data) -> str:
@@ -37,10 +40,11 @@ def parse(content: str) -> Data:
     for block in blocks:
         match = re.match(BLOCK_PATTERN, block)
         if not match:
-            raise ParseLyricError('srt')
+            continue
 
         line_number = int(match.group(1))
         if line_number != last_line_number + 1:
+            logger.debug(block)
             raise ParseLyricError('srt')
         last_line_number = line_number
         line: Line = {
