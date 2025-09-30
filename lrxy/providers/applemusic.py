@@ -24,7 +24,7 @@ import requests
 
 from .utils import MetadataParams, ProviderResponse, LyricData
 
-API = "https://api.paxsenix.dpdns.org/"
+API = "https://api.paxsenix.org/"
 SEARCH_API = f"{API}/apple-music/search"
 LYRICS_API = f"{API}/lyrics/applemusic"
 API_TOKEN = os.getenv("PAXSENIX_API_TOKEN")

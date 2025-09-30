@@ -26,7 +26,7 @@ import requests
 from .utils import MetadataParams, ProviderResponse, LyricData
 
 
-API: str = "https://api.paxsenix.dpdns.org/musixmatch/tracks/match/lyrics"
+API: str = "https://api.paxsenix.org/musixmatch/tracks/match/lyrics"
 API_TOKEN = os.getenv("PAXSENIX_API_TOKEN")
 HEADERS = {
     "Authorization": f"Bearer {API_TOKEN}",
