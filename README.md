@@ -8,14 +8,20 @@ Embed lyrics directly into your audio files with a simple, consistent interface 
 ## Features
 
 - **Support multiple providers**: Ablity to choose between different providers. Currently supported providers:
-  - LRCLib
-  - Apple Music (supports word-by-word lyrics)
-  - MusixMatch
+
+|Provider|Details|
+|-|----|
+|**LRCLib**|Simple and reliable LRC provider|
+|**Apple Music**|Supports word-by-word lyrics|
+|**MusixMatch**|Large lyrics database used by most streaming services|
 - **Batch processing**: Process multiple files efficiently
 - **Support multiple formats**: Support a wide range of audio formats and most used lyric formats including:
-  - LRC (Extended LyRiC, a rich lrc format with word-by-word support)
-  - TTML (Timed Text Markup Language)
-  - SRT
+
+|Format|Details|
+|-|------|
+|**LRC**|Extended LyRiC is a rich LRC format with word-by-word support and other features|
+|**TTML**|Timed Text Markup Language standard by Apple|
+|**SRT**|Popular line-by-line media subtitle format|
 
 ## Installation
 
@@ -285,6 +291,10 @@ for result in iter_files("Music/*.mp3"):
 
 - Python 3.10+
 - Mutagen (installed automatically as dependency)
+
+## Acknowledgments
+- [**Paxsenix API**][https://api.paxsenix.org/]: For Apple Music and MusixMatch providers
+- [**LRCLib**](https://lrclib.net): For their great lyric platform
 
 ## License
 
