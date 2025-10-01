@@ -293,7 +293,7 @@ for result in iter_files("Music/*.mp3"):
 - Mutagen (installed automatically as dependency)
 
 ## Acknowledgments
-- [**Paxsenix API**][https://api.paxsenix.org/]: For Apple Music and MusixMatch providers
+- [**Paxsenix API**](https://api.paxsenix.org/): For Apple Music and MusixMatch providers
 - [**LRCLib**](https://lrclib.net): For their great lyric platform
 
 ## License
