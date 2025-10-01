@@ -22,7 +22,8 @@ logger = logging.getLogger(__name__)
 def get_parser():
     parser = argparse.ArgumentParser(
         prog='lrxy-convert',
-        description='A tool from lrxy to convert lyric formats'
+        description=('A tool from lrxy '
+                     'to convert between different lyric formats')
     )
 
     parser.add_argument(

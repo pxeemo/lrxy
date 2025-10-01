@@ -7,11 +7,15 @@ Embed lyrics directly into your audio files with a simple, consistent interface 
 
 ## Features
 
-- **Format-agnostic API**: Same interface for all audio formats
+- **Support multiple providers**: Ablity to choose between different providers. Currently supported providers:
+  - LRCLib
+  - Apple Music (supports word-by-word lyrics)
+  - MusixMatch
 - **Batch processing**: Process multiple files efficiently
-- **LRCLib integration**: Automatic lyric fetching from metadata
-- **Error resilient**: Continue processing even when some files fail
-- **Metadata validation**: Ensures required tags exist before embedding
+- **Support multiple formats**: Support a wide range of audio formats and most used lyric formats including:
+  - LRC (Extended LyRiC, a rich lrc format with word-by-word support)
+  - TTML (Timed Text Markup Language)
+  - SRT
 
 ## Installation
 
@@ -22,13 +26,15 @@ pip install lrxy
 
 #### Using uv:
 ```sh
-uv tool install lrxy # as a cli tool
-uv pip install lrxy # as a python module
+uv tool install lrxy  # as a cli tool
+uv pip install lrxy   # as a python module
 ```
 
 ## Command Line
 
 ### lrxy
+
+A synced lyric fetcher and embedder for music files
 
 ```
 usage: lrxy [-h] [-n | --embed FILE] [-f {ttml,lrc,srt,json}]
@@ -36,8 +42,6 @@ usage: lrxy [-h] [-n | --embed FILE] [-f {ttml,lrc,srt,json}]
             [--shell-completion {bash,zsh,fish}]
             [--log-level {error,warning,info,debug}] [-v]
             MUSIC_FILE [MUSIC_FILE ...]
-
-A synced lyric fetcher and embedder for music files
 
 positional arguments:
   MUSIC_FILE            path of music file to process
@@ -60,14 +64,15 @@ options:
 Provider is goning to ba lrclib by default
 
 ### lrxy-convert
+
+A tool from lrxy to convert between different lyric formats
+
 ```
 usage: lrxy-convert [-h] [-i {ttml,lrc,srt,json}]
                     [-o {ttml,lrc,srt,json}]
                     [--shell-completion {bash,zsh,fish}]
                     [--log-level {error,warning,info,debug}]
                     INPUT OUTPUT
-
-A tool from lrxy to convert lyric formats
 
 positional arguments:
   INPUT                 path of the input file to convert from
@@ -87,7 +92,7 @@ options:
 The default output is a json structed data
 
 ### Example
-Easy to use automatic batch lyric fetch an# embed:
+Easy to use automatic batch lyric fetch and embed:
 ```sh
 lrxy song1.mp3 song2.flac
 ```
@@ -151,10 +156,10 @@ audio.embed_lyric("Verse 1\nThis is a line\n\nChorus\nThis is the chorus")
 from lrxy.converter import ttml, lrc
 
 with open("path/to/lyric.ttml", "r") as f:
-  lyric = f.read()
+  ttml_lyric = f.read()
 
 # parse the contents of the ttml file into a structed json data
-data = ttml.parse(lyric)
+data = ttml.parse(ttml_lyric)
 
 # generate lrc format lyric from the structed data
 lrc_lyric = lrc.generate(data)
