@@ -28,9 +28,13 @@ uv pip install lrxy # as a python module
 
 ## Command Line
 
+### lrxy
+
 ```
-usage: lrxy [-h] [-n | --embed FILE]
-            [--log-level {error,warning,info,debug}]
+usage: lrxy [-h] [-n | --embed FILE] [-f {ttml,lrc,srt,json}]
+            [-p {lrclib,musixmatch,applemusic}] [--no-overwrite]
+            [--shell-completion {bash,zsh,fish}]
+            [--log-level {error,warning,info,debug}] [-v]
             MUSIC_FILE [MUSIC_FILE ...]
 
 A synced lyric fetcher and embedder for music files
@@ -42,12 +46,70 @@ options:
   -h, --help            show this help message and exit
   -n, --no-embed        write lyrics to separate text files
   --embed FILE          embed existing lyric file into music
+  -f {ttml,lrc,srt,json}, --format {ttml,lrc,srt,json}
+                        output lyrics format
+  -p {lrclib,musixmatch,applemusic}, --provider {lrclib,musixmatch,applemusic}
+                        provider to fetch lyrics
+  --no-overwrite        do not overwrite existing lyrics
+  --shell-completion {bash,zsh,fish}
+                        provide shell completion
   --log-level {error,warning,info,debug}
+                        command line verbosity
+  -v, --version         show current lrxy version and exit
 ```
+Provider is goning to ba lrclib by default
 
-Easy to use automatic fetch an# embed
+### lrxy-convert
+```
+usage: lrxy-convert [-h] [-i {ttml,lrc,srt,json}]
+                    [-o {ttml,lrc,srt,json}]
+                    [--shell-completion {bash,zsh,fish}]
+                    [--log-level {error,warning,info,debug}]
+                    INPUT OUTPUT
+
+A tool from lrxy to convert lyric formats
+
+positional arguments:
+  INPUT                 path of the input file to convert from
+  OUTPUT                path of the output file to convert to
+
+options:
+  -h, --help            show this help message and exit
+  -i {ttml,lrc,srt,json}, --input-format {ttml,lrc,srt,json}
+                        input lyric file format
+  -o {ttml,lrc,srt,json}, --output-format {ttml,lrc,srt,json}
+                        output lyric file format
+  --shell-completion {bash,zsh,fish}
+                        provide shell completion
+  --log-level {error,warning,info,debug}
+                        command line verbosity
+```
+The default output is a json structed data
+
+### Example
+Easy to use automatic batch lyric fetch an# embed:
 ```sh
 lrxy song1.mp3 song2.flac
+```
+
+Get lyric for songs as a separate ttml file from Apple Music:
+```sh
+lrxy -p applemusic -n song.opus
+```
+
+Embed a lyric file to a music without any further steps:
+```sh
+lrxy --embed lyric.lrc song.m4a
+```
+
+Convert a ttml file to an elrc type format:
+```sh
+lrxy-convert lyric.ttml lyric.lrc
+```
+
+You can also pipe with specifying the format manually:
+```sh
+lrxy-convert lyric.srt -o ttml - | cat
 ```
 
 ## Quick Start
@@ -82,6 +144,23 @@ print(f"Duration: {audio.duration} seconds")
 
 # Embed lyrics
 audio.embed_lyric("Verse 1\nThis is a line\n\nChorus\nThis is the chorus")
+```
+
+### Embedded Lyric Converting
+```python
+from lrxy.converter import ttml, lrc
+
+with open("path/to/lyric.ttml", "r") as f:
+  lyric = f.read()
+
+# parse the contents of the ttml file into a structed json data
+data = ttml.parse(lyric)
+
+# generate lrc format lyric from the structed data
+lrc_lyric = lrc.generate(data)
+
+with open("path/to/output/lyric.lrc", "w") as f:
+  f.write(lrc_lyric)
 ```
 
 ### Batch Processing
