@@ -31,15 +31,8 @@ def parse_wbw_line(line_tag, ns) -> tuple[Line, list[Line]]:
                 'text': word_tag.text
             })
 
-    if line_tag.get('begin'):
-        line['begin'] = deformat_time(line_tag.get('begin'))
-    else:
-        line['begin'] = line['content'][0]['begin']
-
-    if line_tag.get('end'):
-        line['end'] = deformat_time(line_tag.get('end'))
-    else:
-        line['end'] = line['content'][-1]['end']
+    line['begin'] = line['content'][0]['begin']
+    line['end'] = line['content'][-1]['end']
 
     return line, inline_bg_lines
 
