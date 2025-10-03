@@ -22,7 +22,7 @@ class Data(TypedDict):
     lyrics: list[Line]
 
 
-def deformat_time(text: str | None, srt: bool = False) -> int:
+def deformat_time(text: str, srt: bool = False) -> int:
     if srt:
         text = text.replace(',', '.')
     if re.match(r'.*\ds$', text):

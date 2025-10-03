@@ -2,7 +2,8 @@ import re
 
 from lxml import etree
 
-from .utils import Data, Line, Word, deformat_time, format_time
+from lrxy.exceptions import ParseLyricError, UnexpectedTimingError
+from .utils import Data, Line, deformat_time, format_time
 
 
 def parse_wbw_line(line_tag, ns):
@@ -24,34 +25,24 @@ def parse_wbw_line(line_tag, ns):
             bg_line, _ = parse_wbw_line(word_tag, ns)
             inline_bg_lines.append(bg_line)
         else:
-            word_begin = deformat_time(word_tag.get('begin'))
-            if not line['begin'] and word_begin:
-                line['begin'] = word_begin
-            word: Word = {
-                'begin': word_begin,
+            line['content'].append({
+                'begin': deformat_time(word_tag.get('begin')),
                 'end': deformat_time(word_tag.get('end')),
                 'part': not word_tag.tail or ' ' not in word_tag.tail,
                 'text': word_tag.text
-            }
-            line['content'].append(word)
-
-    if not line['end']:
-        last_word_end = line['content'][-1]['end']
-        if last_word_end:
-            line['end'] = last_word_end
+            })
 
     return line, inline_bg_lines
 
 
-def parse_line(line_tag, ns):
-    line: Line = {
+def parse_line(line_tag, ns) -> Line:
+    return {
         'begin': deformat_time(line_tag.get('begin')),
         'end': deformat_time(line_tag.get('end')),
         'agent': line_tag.get(f'{{{ns["ttm"]}}}agent'),
         'background': line_tag.get(f'{{{ns["ttm"]}}}role') == 'x-bg',
         'content': line_tag.text,
     }
-    return line
 
 
 def parse(input_data: str):
@@ -68,25 +59,30 @@ def parse(input_data: str):
     ps = tree.xpath("//xmlns:p", namespaces=ns)
     lines = []
 
-    if timing == 'Word':
-        for p in ps:
-            line, inline_bg_lines = parse_wbw_line(p, ns)
-            lines.append(line)
-            lines.extend(inline_bg_lines)
-    elif timing == "Line":
-        for p in ps:
-            line = parse_line(p, ns)
-            lines.append(line)
-    elif timing == 'None':
-        for p in ps:
-            line: Line = {
-                'begin': None,
-                'end': None,
-                'agent': None,
-                'background': None,
-                'content': p.text,
-            }
-            lines.append(line)
+    try:
+        if timing in ('Word', 'Syllable'):
+            for p in ps:
+                line, inline_bg_lines = parse_wbw_line(p, ns)
+                lines.append(line)
+                lines.extend(inline_bg_lines)
+        elif timing == "Line":
+            for p in ps:
+                line = parse_line(p, ns)
+                lines.append(line)
+        elif timing == 'None':
+            for p in ps:
+                line: Line = {
+                    'begin': None,
+                    'end': None,
+                    'agent': None,
+                    'background': None,
+                    'content': p.text,
+                }
+                lines.append(line)
+        else:
+            raise ParseLyricError("ttml", f"Timing {timing} is not supported")
+    except TypeError:
+        raise UnexpectedTimingError(p.sourceline, "ttml")
 
     data: Data = {
         'timing': timing,
