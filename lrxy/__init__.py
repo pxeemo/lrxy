@@ -8,15 +8,15 @@ class ColoredFormatter(logging.Formatter):
         self.use_colors = self._supports_color()
 
         if self.use_colors:
-            self.RED = '\033[31m'
-            self.YELLOW = '\033[33m'
-            self.CYAN = '\033[36m'
-            self.RESET = '\033[0m'
+            self.red = '\033[31m'
+            self.yellow = '\033[33m'
+            self.cyan = '\033[36m'
+            self.reset = '\033[0m'
         else:
-            self.RED = ''
-            self.YELLOW = ''
-            self.CYAN = ''
-            self.RESET = ''
+            self.red = ''
+            self.yellow = ''
+            self.cyan = ''
+            self.reset = ''
 
     def _supports_color(self):
         """Check if the terminal supports ANSI colors."""
@@ -26,12 +26,17 @@ class ColoredFormatter(logging.Formatter):
         if record.levelno == logging.INFO:
             return record.getMessage()
         elif record.levelno == logging.ERROR:
-            record.levelname = f"{self.RED}Error{self.RESET}"
+            record.levelname = f"{self.red}Error{self.reset}"
         elif record.levelno == logging.WARNING:
-            record.levelname = f"{self.YELLOW}Warning{self.RESET}"
+            record.levelname = f"{self.yellow}Warning{self.reset}"
         elif record.levelno == logging.DEBUG:
-            record.levelname = f"{self.CYAN}Debug{self.RESET}: {record.name}"
-        return f"{record.levelname}: {record.getMessage()}"
+            record.levelname = f"{self.cyan}Debug{self.reset}: {record.name}"
+
+        msg_lines = record.getMessage().splitlines()
+        ansi_length = 7 if self.use_colors else 0
+        msg_start_pad = " " * (len(record.levelname) - ansi_length)
+        msg = str("\n" + msg_start_pad).join(msg_lines)
+        return f"{record.levelname}: {msg}"
 
 
 def setup_logging(level=logging.WARNING):
