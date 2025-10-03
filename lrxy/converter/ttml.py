@@ -2,13 +2,13 @@ import re
 
 from lxml import etree
 
-from .utils import Data, Line, deformat_time, format_time
+from .utils import Data, Line, Word, deformat_time, format_time
 
 
-def parse_wbw_line(line_tag, ns) -> tuple[Line, list[Line]]:
+def parse_wbw_line(line_tag, ns):
     line: Line = {
-        'begin': None,
-        'end': None,
+        'begin': deformat_time(line_tag.get('begin')),
+        'end': deformat_time(line_tag.get('end')),
         'agent': line_tag.get(f'{{{ns["ttm"]}}}agent'),
         'background': line_tag.get(f'{{{ns["ttm"]}}}role') == 'x-bg',
         'content': []
@@ -24,34 +24,34 @@ def parse_wbw_line(line_tag, ns) -> tuple[Line, list[Line]]:
             bg_line, _ = parse_wbw_line(word_tag, ns)
             inline_bg_lines.append(bg_line)
         else:
-            line['content'].append({
-                'begin': deformat_time(word_tag.get('begin')),
+            word_begin = deformat_time(word_tag.get('begin'))
+            if not line['begin'] and word_begin:
+                line['begin'] = word_begin
+            word: Word = {
+                'begin': word_begin,
                 'end': deformat_time(word_tag.get('end')),
                 'part': not word_tag.tail or ' ' not in word_tag.tail,
                 'text': word_tag.text
-            })
+            }
+            line['content'].append(word)
 
-    if line_tag.get('begin'):
-        line['begin'] = deformat_time(line_tag.get('begin'))
-    else:
-        line['begin'] = line['content'][0]['begin']
-
-    if line_tag.get('end'):
-        line['end'] = deformat_time(line_tag.get('end'))
-    else:
-        line['end'] = line['content'][-1]['end']
+    if not line['end']:
+        last_word_end = line['content'][-1]['end']
+        if last_word_end:
+            line['end'] = last_word_end
 
     return line, inline_bg_lines
 
 
-def parse_line(line_tag, ns) -> Line:
-    return {
+def parse_line(line_tag, ns):
+    line: Line = {
         'begin': deformat_time(line_tag.get('begin')),
         'end': deformat_time(line_tag.get('end')),
         'agent': line_tag.get(f'{{{ns["ttm"]}}}agent'),
         'background': line_tag.get(f'{{{ns["ttm"]}}}role') == 'x-bg',
         'content': line_tag.text,
     }
+    return line
 
 
 def parse(input_data: str):
