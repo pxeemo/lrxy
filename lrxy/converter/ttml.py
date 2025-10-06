@@ -8,8 +8,8 @@ from .utils import Data, Line, deformat_time, format_time
 
 def parse_wbw_line(line_tag, ns):
     line: Line = {
-        'begin': deformat_time(line_tag.get('begin')),
-        'end': deformat_time(line_tag.get('end')),
+        'begin': None,
+        'end': None,
         'agent': line_tag.get(f'{{{ns["ttm"]}}}agent'),
         'background': line_tag.get(f'{{{ns["ttm"]}}}role') == 'x-bg',
         'content': []
@@ -31,6 +31,17 @@ def parse_wbw_line(line_tag, ns):
                 'part': not word_tag.tail or ' ' not in word_tag.tail,
                 'text': word_tag.text
             })
+
+    if not line_tag.get('begin') or not line_tag.get('end'):
+        if line['background']:
+            line['begin'] = line['content'][0]['begin']
+            line['end'] = line['content'][-1]['end']
+        else:
+            raise TypeError
+
+    else:
+        line['begin'] = deformat_time(line_tag.get('begin'))
+        line['end'] = deformat_time(line_tag.get('end'))
 
     return line, inline_bg_lines
 
