@@ -157,7 +157,7 @@ print(f"Duration: {audio.duration} seconds")
 audio.embed_lyric("Verse 1\nThis is a line\n\nChorus\nThis is the chorus")
 ```
 
-### Embedded Lyric Converting
+### Lyric Converting
 ```python
 from lrxy.converter import ttml, lrc
 
