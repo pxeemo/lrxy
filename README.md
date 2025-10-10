@@ -67,7 +67,7 @@ options:
                         command line verbosity
   -v, --version         show current lrxy version and exit
 ```
-Provider is goning to ba lrclib by default
+Provider is going to be lrclib by default
 
 ### lrxy-convert
 
@@ -205,7 +205,7 @@ lrxy supports the most common audio formats with consistent API access:
 
 | Format | File Extensions | Tag Standard | Notes |
 |--------|-----------------|--------------|-------|
-| **MP3** | `.mp3` | ID3v2.3 | Converts to ID3v2.3 for maximum compatibility |
+| **MP3** | `.mp3` | ID3 | Supports both ID3v2.3 and ID3v2.4 and uses `USLT` tag to store lyric |
 | **FLAC**, **Opus** | `.flac`, `.opus` | Vorbis Comments | Stores lyrics in standard `lyrics` field |
 | **Ogg Vorbis** | `.ogg`, `.oga` | Vorbis Comments | Same as FLAC format handling |
 | **M4A/MP4** | `.m4a`, `.mp4`, `.aac` | MP4 atoms | Uses Apple's `©lyr` field |
@@ -215,7 +215,6 @@ lrxy supports the most common audio formats with consistent API access:
 #### MP3 (ID3 Tags)
 - **Required metadata**: Artist (`TPE1`), Title (`TIT2`), Album (`TALB`)
 - **Lyrics storage**: `USLT` frame (unsynchronized lyrics)
-- **Special handling**: Automatically converts to ID3v2.3 and cleans existing lyric tags
 
 #### FLAC/Ogg (Vorbis Comments)
 - **Required metadata**: Artist (`artist`), Title (`title`), Album (`album`)

@@ -15,7 +15,7 @@ class LrxyID3(LrxyAudio):
     """ID3 tag handler for lyric embedding operations.
 
     Specializes in managing unsynchronized lyrics (USLT) in audio files
-    using ID3v2.3 tags. Handles automatic tag version conversion and
+    using ID3 tags. Handles automatic tag version conversion and
     cleanup of existing lyric tags before embedding new content.
 
     Inherits from LrxyAudio to enforce required metadata fields
@@ -49,10 +49,9 @@ class LrxyID3(LrxyAudio):
         """Embed lyrics into the audio file's ID3 tags.
 
         Performs a complete lyric embedding workflow:
-        1. Converts tags to ID3v2.3 (broadest player compatibility)
-        2. Removes all existing USLT and SYLT lyrics
-        3. Creates new USLT tag with UTF-8 encoding (encoding=3)
-        4. Saves changes to the audio file
+        1. Removes all existing USLT and SYLT lyrics
+        2. Creates new USLT tag with UTF-8 encoding (encoding=3)
+        3. Saves changes to the audio file
 
         Note:
             - Uses empty description field ('') for the USLT tag
