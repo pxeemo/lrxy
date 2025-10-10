@@ -9,6 +9,7 @@ dependencies = [
   "requests",
   "mutagen",
   "argparse",
+  "argcomplete",
 ]
 requires-python = ">=3.10"
 description = "A synced lyric fetcher and embedder for music files"
@@ -21,6 +22,7 @@ authors = [
 
 [project.scripts]
 lrxy = "lrxy.__main__:main"
+lrxy-convert = "lrxy.converter.main:main"
 
 [project.urls]
 Repository = "https://github.com/pxeemo/lrxy.git"

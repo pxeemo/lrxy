@@ -1,27 +1,58 @@
+"""Provides different type of exceptions"""
+
+
 class LrxyException(Exception):
+    """Base exception super class type"""
+
     def __init__(self, message: str) -> None:
+        self.message = message
         super().__init__(message)
 
 
 class PathNotExistsError(LrxyException):
-    def __init__(self, path: str) -> None:
-        self.message = f"The path '{path}' does not exist"
-        super().__init__(self.message)
+    """Path does not exist."""
+
+    def __init__(self) -> None:
+        super().__init__("Path does not exist.")
 
 
-class FileError(LrxyException):
-    def __init__(self, path: str) -> None:
-        self.message = f"This path '{path}' is not a file"
-        super().__init__(self.message)
+class NotFileError(LrxyException):
+    """Path is not a file."""
+
+    def __init__(self) -> None:
+        super().__init__("Path is not a file.")
 
 
 class UnsupportedFileFormatError(LrxyException):
-    def __init__(self, unsupported_format: str) -> None:
-        self.message = f"Unsupported format: '{unsupported_format}'"
-        super().__init__(self.message)
+    """Unsupported file format."""
+
+    def __init__(self) -> None:
+        super().__init__("Unsupported file format.")
 
 
 class TagError(LrxyException):
-    def __init__(self, path: str, tag_name: str) -> None:
-        self.message = f"This music '{path}' has no tag {tag_name}"
-        super().__init__(self.message)
+    """File has no valid metadata tag"""
+
+    def __init__(self, tag_name: str) -> None:
+        super().__init__(f"File has no tag {tag_name}")
+
+
+class ParseLyricError(LrxyException):
+    """There was a problem with parsing"""
+
+    def __init__(self, in_format: str, details: str | None = None) -> None:
+        message = f"There was a problem parsing {in_format}"
+        if details:
+            message += "\n" + details
+        super().__init__(message)
+
+
+class UnexpectedTimingError(ParseLyricError):
+    """Got an unexpected content timing during tha parse"""
+
+    def __init__(self, line_number: int, in_format: str):
+        super().__init__(
+            in_format,
+            "Got an unexpected content timing during tha parse"
+            f" in line: {line_number}"
+        )

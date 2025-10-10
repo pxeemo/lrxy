@@ -2,85 +2,65 @@
 
 Provides foundational classes for:
 - File path validation and normalization (BaseFile)
-- Audio metadata extraction and lyric embedding (AudioType)
+- Audio metadata extraction and lyric embedding (LrxyAudio)
 
 All format-specific handlers (LrxyID3, LrxyVorbis, LrxyMP4) inherit from
 these base classes to ensure consistent behavior across audio formats.
 """
 
-from typing import Union, List, Dict
 from pathlib import Path
 
 from mutagen import FileType
 
 from lrxy.exceptions import (
-    UnsupportedFileFormatError,
-    FileError,
+    NotFileError,
     TagError,
     PathNotExistsError,
 )
 
 
-class BaseFile:
-    """Base class for file path handling and validation.
+def validate_path(path: str | Path) -> Path:
+    """Initialize with validated file path.
 
-    Provides standardized file path processing and validation for both
-    audio files and lyric files. Handles path normalization, existence
-    checks, and format validation.
+    Checks existence, and validates file type/format.
 
     Args:
-        path: File path (string or Path object)
-        match_file: If True, validates path has desired format extension (.lrc)
+        path: File path to process
 
     Raises:
-        ValueError: If path is not string or Path object
-        PathNotExistsError: If file doesn't exist
-        FileError: If path points to a directory
-        UnsupportedFileFormatError: If match_file=True and extension invalid
+        ValueError: Invalid path type
+        PathNotExistsError: Path doesn't exist
+        NotFileError: Path is not a file
+        UnsupportedFileFormatError: Invalid music file format
+
+    Returns:
+        path (Path): Normalized path
 
     Example:
-        >>> from lrxy.formats import BaseFile
-        >>> audio_file = BaseFile("song.mp3")
-        >>> lrc_file = BaseFile("song.lrc", match_file=True)
+        ```python
+        >>> from pathlib import Path
+        >>> BaseFile(Path("~/Music/song.flac").expanduser())
+        ```
     """
+    if isinstance(path, str):
+        path = Path(path).expanduser()
+    elif isinstance(path, Path):
+        path = path.expanduser()
+    else:
+        raise ValueError(
+            "The path must be a string or a pathlib.Path object")
 
-    def __init__(self, path: Union[str, Path], *, match_file: bool = False) -> None:
-        """Initialize with validated file path.
+    if not path.exists():
+        raise PathNotExistsError()
 
-        Normalizes path, checks existence, and validates file type/format.
+    if not path.is_file():
+        raise NotFileError()
 
-        Args:
-            path: File path to process
-            match_file: Require .lrc extension when True
-
-        Raises:
-            ValueError: Invalid path type
-            PathNotExistsError: Path doesn't exist
-            FileError: Path is a directory
-            UnsupportedFileFormatError: Invalid music file format
-
-        Example:
-            >>> from pathlib import Path
-            >>> BaseFile(Path("~/Music/song.flac").expanduser())
-        """
-        if isinstance(path, str):
-            self.path = Path(path).expanduser()
-        elif isinstance(path, Path):
-            self.path = path.expanduser()
-        else:
-            raise ValueError(
-                "The path must be a string or a pathlib.Path object")
-
-        if not self.path.exists():
-            raise PathNotExistsError(str(self.path))
-
-        if not self.path.is_file():
-            raise FileError(str(self.path))
-
-        self.extension = self.path.suffix
+    # extension = path.suffix
+    return path
 
 
-class AudioType(BaseFile):
+class LrxyAudio:
     """Abstract base class for audio metadata handling and lyric embedding.
 
     Provides standardized:
@@ -94,7 +74,7 @@ class AudioType(BaseFile):
 
     Args:
         audio: Mutagen audio file object
-        tags_name: List of tag names for [artist, title, album]
+        tag_keys: Tag names for {"artist": str, "title": str, "album": str}
 
     Raises:
         TagError: Missing required metadata tag
@@ -102,11 +82,15 @@ class AudioType(BaseFile):
     Example:
         >>> from mutagen import File
         >>> audio = File("song.mp3")
-        >>> handler = AudioType(audio, ["TPE1", "TIT2", "TALB"])
+        >>> handler = LrxyAudio(audio, {
+        ...     "artist": "TPE1",
+        ...     "title": "TIT2",
+        ...     "album": "TALB",
+        ... })  # tag keys for ID3
         >>> handler.embed_lyric("...")  # Implemented by subclasses
     """
 
-    def __init__(self, audio: FileType, tags_name: List[str]) -> None:
+    def __init__(self, audio: FileType, tag_keys: dict[str, str]) -> None:
         """Initialize with validated audio metadata.
 
         Extracts and validates required metadata fields from audio tags.
@@ -114,7 +98,7 @@ class AudioType(BaseFile):
 
         Args:
             audio: Mutagen audio file object
-            tags_name: Tag names for [artist, title, album]
+            tag_keys: Tag names for {"artist": str, "title": str, "album": str}
 
         Raises:
             TagError: If any required tag is missing
@@ -122,37 +106,42 @@ class AudioType(BaseFile):
         Example:
             >>> from mutagen.mp3 import MP3
             >>> audio = MP3("song.mp3")
-            >>> AudioType(audio, ["TPE1", "TIT2", "TALB"])
+            >>> LrxyAudio(audio, {
+            ...     "artist": "TPE1",
+            ...     "title": "TIT2",
+            ...     "album": "TALB",
+            ... })  # tag keys for ID3
         """
-        super().__init__(audio.filename)
-
+        self.path = validate_path(audio.filename)
         self.audio = audio
-        self.artist_name = audio.get(tags_name[0])
-        self.track_name = audio.get(tags_name[1])
-        self.album = audio.get(tags_name[2])
+        self.artist = audio.get(tag_keys["artist"])
+        self.title = audio.get(tag_keys["title"])
+        self.album = audio.get(tag_keys["album"])
         self.duration = str(int(audio.info.length))
 
-        if self.artist_name:
-            self.artist_name = self.artist_name[0]
+        if self.artist:
+            self.artist = self.artist[0]
         else:
-            raise TagError(str(self.path), "artist")
+            raise TagError("artist")
 
-        if self.track_name:
-            self.track_name = self.track_name[0]
+        if self.title:
+            self.title = self.title[0]
         else:
-            raise TagError(str(self.path), "track")
+            raise TagError("title")
 
         if self.album:
             self.album = self.album[0]
         else:
-            raise TagError(str(self.path), "album")
+            raise TagError("album")
 
     def __repr__(self):
         """Return formal string representation.
 
         Example:
-            >>> repr(AudioType(...))
+            ```python
+            >>> repr(LrxyAudio(...))
             "LrxyID3('path/to/song.mp3')"
+            ```
         """
         return f"{self.__class__.__name__}({str(self.path)!r})"
 
@@ -160,35 +149,38 @@ class AudioType(BaseFile):
         """Return string representation (file path).
 
         Example:
-            >>> str(AudioType(...))
+            ```python
+            >>> str(LrxyAudio(...))
             "path/to/song.mp3"
+            ```
         """
         return str(self.path)
 
-    def get_tags(self) -> Dict[str, str]:
+    def get_tags(self) -> dict[str, str]:
         """Get extracted metadata as dictionary.
 
-        Returns:
-            Dictionary containing:
-            - artist_name: Primary artist name
-            - track_name: Track title
-            - album_name: Album title
-            - duration: Track duration in seconds (as string)
+        Returns: Dictionary containing:
+            title: Track title
+            artist: Primary artist name
+            album: Album title
+            duration: Track duration in seconds (as string)
 
         Example:
+            ```python
             >>> handler.get_tags()
             {
-                'artist_name': 'Artist',
-                'track_name': 'Title',
-                'album_name': 'Album',
+                'title': 'Title',
+                'artist': 'Artist',
+                'album': 'Album',
                 'duration': '245'
             }
+            ```
         """
         return {
-            "artist_name": self.artist_name,
-            "track_name": self.track_name,
-            "album_name": self.album,
-            "duration": self.duration
+            "title": self.title,
+            "artist": self.artist,
+            "album": self.album,
+            "duration": self.duration,
         }
 
     def embed_lyric(self, lyric: str):
@@ -210,7 +202,7 @@ class AudioType(BaseFile):
         raise NotImplementedError(
             "This method should be implemented by subclasses.")
 
-    def embed_from_file(self, path: Union[str, Path]):
+    def embed_from_file(self, path: str | Path):
         """Embed lyrics from an external file.
 
         Loads lyrics from external file and embeds using format-specific
@@ -228,7 +220,7 @@ class AudioType(BaseFile):
             >>> audio = load_audio("song.mp3")
             >>> audio.embed_from_file("song.lrc")
         """
-        file = BaseFile(path, match_file=True)
+        file = validate_path(path)
 
-        with open(file.path) as lrc:
+        with open(file) as lrc:
             self.embed_lyric(lrc.read())

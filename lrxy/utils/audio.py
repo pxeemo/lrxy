@@ -50,11 +50,12 @@ def load_audio(file: Union[Path, str]) -> Union[LrxyID3, LrxyVorbis, LrxyMP4]:
 
     audio = File(file)
 
-    if isinstance(audio.tags, ID3):
-        return LrxyID3(audio)
-    if isinstance(audio.tags, VComment):
-        return LrxyVorbis(audio)
-    if isinstance(audio.tags, MP4Tags):
-        return LrxyMP4(audio)
+    if audio:
+        if isinstance(audio.tags, ID3):
+            return LrxyID3(audio)
+        if isinstance(audio.tags, VComment):
+            return LrxyVorbis(audio)
+        if isinstance(audio.tags, MP4Tags):
+            return LrxyMP4(audio)
 
-    raise UnsupportedFileFormatError(audio.__name__)
+    raise UnsupportedFileFormatError()

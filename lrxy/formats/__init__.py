@@ -11,19 +11,21 @@ For most use cases, prefer using the unified interface:
     >>> audio.embed_lyric("...")
 
 The following format-specific handlers are available for advanced use:
+- LrxyAudio: Superclass of LrxyID3, LrxyVorbis and LrxyMP4
 - LrxyID3: For MP3 files (ID3 tags)
 - LrxyVorbis: For Ogg/Vorbis and FLAC files
 - LrxyMP4: For M4A/MP4 files
 
-All handlers inherit from AudioType and provide identical methods:
+All handlers inherit from LrxyAudio and provide identical methods:
 - embed_lyric(lyric: str): Embed plain-text lyrics
 - embed_from_file(path): Embed lyrics from separate text file
 - get_tags(): Retrieve metadata dictionary
 """
 
+from .filetype import LrxyAudio
 from .id3 import LrxyID3
 from .vorbis import LrxyVorbis
 from .mp4 import LrxyMP4
 
 
-__all__ = ["LrxyID3", "LrxyVorbis", "LrxyMP4"]
+__all__ = ["LrxyAudio", "LrxyID3", "LrxyVorbis", "LrxyMP4"]
