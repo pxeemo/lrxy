@@ -10,6 +10,7 @@ dependencies = [
   "mutagen",
   "argparse",
   "argcomplete",
+  "lxml>=6.0.2",
 ]
 requires-python = ">=3.10"
 description = "A synced lyric fetcher and embedder for music files"

@@ -11,7 +11,7 @@ from lrxy import completions
 
 
 def get_version():
-    from importlib_metadata import version
+    from importlib.metadata import version
     return version("lrxy")
 
 
