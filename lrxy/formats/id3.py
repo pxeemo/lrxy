@@ -71,7 +71,6 @@ class LrxyID3(LrxyAudio):
 
         lyric_tag = USLT(encoding=3, desc='Embedded with lrxy', text=lyric)
         audio = self.audio
-        audio.tags.update_to_v23()
         audio.tags.delall('USLT')
         audio.tags.delall('SYLT')
         audio.tags.add(lyric_tag)
