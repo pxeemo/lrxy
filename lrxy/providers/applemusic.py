@@ -119,7 +119,7 @@ def applemusic_api(params: MetadataParams) -> ProviderResponse:
             data = response.json()
             logger.debug("Track's lyric: %s\n", json.dumps(data))
             lyric_data['timing'] = data['type']
-            lyric_data['lyric'] = data['ttml_content']
+            lyric_data['lyric'] = data['ttmlContent']
 
         result["success"] = True
         result["data"] = lyric_data
