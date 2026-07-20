@@ -118,6 +118,11 @@ def main():
         output_format = args.format or "lrc"
 
         if args.embed:  # embed from file
+            if args.embed == '-':
+                lyric = sys.stdin.read()
+                audio.embed_lyric(lyric)
+                logger.info("Successfully embedded lyric")
+                continue
             audio.embed_from_file(args.embed)
             logger.info("Successfully embedded lyric from file: %s", audio)
             continue
