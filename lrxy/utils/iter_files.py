@@ -8,7 +8,7 @@ from pathlib import Path
 import logging
 
 from lrxy.providers import lrclib_api
-from lrxy.providers.utils import LyricData
+from lrxy.providers.types import LyricData
 from lrxy.formats import LrxyAudio
 from lrxy.exceptions import LrxyException
 from .audio import load_audio

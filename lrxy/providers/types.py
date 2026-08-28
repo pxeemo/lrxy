@@ -7,7 +7,8 @@ class LyricData(TypedDict):
     format: str
     timing: Literal["Word", "Line", "None"] | None
     instrumental: bool
-    lyric: str | dict | None
+    hasLyric: bool
+    lyric: str | None
 
 
 class MetadataParams(TypedDict):

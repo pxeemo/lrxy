@@ -20,7 +20,7 @@ import json
 
 import requests
 
-from .utils import MetadataParams, ProviderResponse, LyricData
+from .types import MetadataParams, ProviderResponse, LyricData
 
 
 API: str = "https://lrclib.net/api/get"

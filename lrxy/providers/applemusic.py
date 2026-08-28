@@ -16,17 +16,22 @@ synchronization when available. This provider preserves that detailed timing
 data in a structured format.
 """
 
-import os
 import json
 import logging
 
 import requests
+from typing import TypedDict
 
-from .utils import MetadataParams, ProviderResponse, LyricData
+from .types import MetadataParams, ProviderResponse, LyricData
 
 SEARCH_API = "https://itunes.apple.com/search"
 LYRICS_API = "https://lyrics.paxsenix.org/apple-music/lyrics"
 logger = logging.getLogger(__name__)
+
+
+class SearchApiResponse(TypedDict):
+    resultCount: int
+    results: list[dict[str, str | int]]
 
 
 def applemusic_api(params: MetadataParams) -> ProviderResponse:
@@ -84,7 +89,7 @@ def applemusic_api(params: MetadataParams) -> ProviderResponse:
             timeout=10.0,
         )
         response.raise_for_status()
-        search_result = response.json()
+        search_result: SearchApiResponse = response.json()
 
         if not search_result.get("results"):
             result["error"] = "notfound"
@@ -93,7 +98,7 @@ def applemusic_api(params: MetadataParams) -> ProviderResponse:
 
         first_match = search_result["results"][0]
         logger.debug("Search result: %s\n", json.dumps(first_match))
-        track_id = first_match['trackId']
+        track_id = int(first_match['trackId'])
 
         response = requests.get(
             LYRICS_API,
@@ -101,7 +106,7 @@ def applemusic_api(params: MetadataParams) -> ProviderResponse:
             timeout=10.0,
         )
         response.raise_for_status()
-        data = response.json()
+        data: dict[str, str] = response.json()
         logger.debug("Track's lyric: %s\n", json.dumps(data))
 
         has_lyric = bool(data.get('ttmlContent'))

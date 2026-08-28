@@ -5,7 +5,7 @@ import re
 
 import requests
 
-from .utils import MetadataParams, ProviderResponse, LyricData
+from .types import MetadataParams, ProviderResponse, LyricData
 
 
 API: str = "https://lyrics.paxsenix.org/qq/lyrics-metadata"
