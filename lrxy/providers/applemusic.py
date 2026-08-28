@@ -24,14 +24,8 @@ import requests
 
 from .utils import MetadataParams, ProviderResponse, LyricData
 
-API = "https://api.paxsenix.org/"
-SEARCH_API = f"{API}/apple-music/search"
-LYRICS_API = f"{API}/lyrics/applemusic"
-API_TOKEN = os.getenv("PAXSENIX_API_TOKEN")
-HEADERS = {
-    "Authorization": f"Bearer {API_TOKEN}",
-    "Content-Type": "application/json",
-}
+SEARCH_API = "https://itunes.apple.com/search"
+LYRICS_API = "https://lyrics.paxsenix.org/apple-music/lyrics"
 logger = logging.getLogger(__name__)
 
 
@@ -82,24 +76,35 @@ def applemusic_api(params: MetadataParams) -> ProviderResponse:
         'data': None,
     }
     query = " ".join([params["title"], params["artist"]])
-    if API_TOKEN:
-        logger.debug("Using api token $PAXSENIX_API_TOKEN")
-    else:
-        logger.warning("API token $PAXSENIX_API_TOKEN not found")
 
     try:
         response = requests.get(
             SEARCH_API,
-            headers=HEADERS,
-            params={'q': query},
+            params={'term': query, 'entity': 'song'},
             timeout=10.0,
         )
         response.raise_for_status()
         search_result = response.json()
+
+        if not search_result.get("results"):
+            result["error"] = "notfound"
+            result["message"] = "No music found for the given track metadata"
+            return result
+
         first_match = search_result["results"][0]
         logger.debug("Search result: %s\n", json.dumps(first_match))
-        track_id = first_match['playParams']['id']
-        has_lyric = first_match["hasTimeSyncedLyrics"]
+        track_id = first_match['trackId']
+
+        response = requests.get(
+            LYRICS_API,
+            params={'id': track_id},
+            timeout=10.0,
+        )
+        response.raise_for_status()
+        data = response.json()
+        logger.debug("Track's lyric: %s\n", json.dumps(data))
+
+        has_lyric = bool(data.get('ttmlContent'))
         lyric_data: LyricData = {
             'format': "ttml",
             'timing': None,
@@ -109,16 +114,8 @@ def applemusic_api(params: MetadataParams) -> ProviderResponse:
         }
 
         if has_lyric:
-            response = requests.get(
-                LYRICS_API,
-                headers=HEADERS,
-                params={'id': track_id},
-                timeout=10.0,
-            )
-            response.raise_for_status()
-            data = response.json()
-            logger.debug("Track's lyric: %s\n", json.dumps(data))
-            lyric_data['timing'] = data['type']
+            timing = "Word" if 'itunes:timing="Word"' in data['ttmlContent'] else "Line"
+            lyric_data['timing'] = timing
             lyric_data['lyric'] = data['ttmlContent']
 
         result["success"] = True

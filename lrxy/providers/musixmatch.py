@@ -26,12 +26,7 @@ import requests
 from .utils import MetadataParams, ProviderResponse, LyricData
 
 
-API: str = "https://api.paxsenix.org/musixmatch/tracks/match/lyrics"
-API_TOKEN = os.getenv("PAXSENIX_API_TOKEN")
-HEADERS = {
-    "Authorization": f"Bearer {API_TOKEN}",
-    "Content-Type": "application/json",
-}
+API: str = "https://lyrics.paxsenix.org/musixmatch/lyrics"
 logger = logging.getLogger(__name__)
 
 
@@ -194,13 +189,14 @@ def musixmatch_api(params: MetadataParams) -> ProviderResponse:
         "message": None,
         "data": None,
     }
-    if API_TOKEN:
-        logger.debug("Using api token $PAXSENIX_API_TOKEN")
-    else:
-        logger.warning("API token $PAXSENIX_API_TOKEN not found")
+    req_params = {
+        't': params.get('title'),
+        'a': params.get('artist'),
+        'd': params.get('duration'),
+    }
 
     try:
-        response = requests.get(API, params=params, timeout=10.0)
+        response = requests.get(API, params=req_params, timeout=10.0)
         response.raise_for_status()
         data = response.json()
         logger.debug("API response: %s\n", json.dumps(data))
