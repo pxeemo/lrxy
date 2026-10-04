@@ -93,6 +93,7 @@ def main():
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
     fetch = not args.embed
+    has_errors = False
 
     match args.provider:
         case "lrclib":
@@ -129,10 +130,12 @@ def main():
 
         if not result['success']:
             logger.error("%s: %s", result['path'], result['error_message'])
+            has_errors = True
             continue
 
         if not lyric_data["hasLyric"]:
             logger.error("%s: Song has no synced lyric.", audio)
+            has_errors = True
             continue
 
         if not args.format and lyric_data["format"] != "json":
@@ -148,6 +151,7 @@ def main():
             file = audio.path.with_suffix(f".{output_format}")
             if file.exists() and not args.overwrite:
                 logger.error("%s: File already exists.", file)
+                has_errors = True
             else:
                 with open(file, "w", encoding="utf-8") as f:
                     f.write(lyric)
@@ -155,9 +159,13 @@ def main():
         else:
             if audio.has_lyric and not args.overwrite:
                 logger.error("%s: Audio file already has embedded lyric.", audio)
+                has_errors = True
             else:
                 audio.embed_lyric(lyric)
                 logger.info("Successfully embedded the lyric: %s", audio)
+
+    if has_errors:
+        sys.exit(1)
 
 
 if __name__ == "__main__":
